@@ -36,10 +36,25 @@ export default function App() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
-  // Data State
-  const [users, setUsers] = useState<User[]>(mockUsers);
+  // Data State with LocalStorage Persistence
+  const [users, setUsers] = useState<User[]>(() => {
+    const saved = localStorage.getItem('skillgrid_users');
+    return saved ? JSON.parse(saved) : mockUsers;
+  });
   const [skills, setSkills] = useState<SkillMaster[]>(mockSkillMaster);
-  const [userSkills, setUserSkills] = useState<UserSkill[]>(mockUserSkills);
+  const [userSkills, setUserSkills] = useState<UserSkill[]>(() => {
+    const saved = localStorage.getItem('skillgrid_user_skills');
+    return saved ? JSON.parse(saved) : mockUserSkills;
+  });
+
+  // Persistence Effects
+  React.useEffect(() => {
+    localStorage.setItem('skillgrid_users', JSON.stringify(users));
+  }, [users]);
+
+  React.useEffect(() => {
+    localStorage.setItem('skillgrid_user_skills', JSON.stringify(userSkills));
+  }, [userSkills]);
 
   // Search/Filter State
   const [searchQuery, setSearchQuery] = useState('');
