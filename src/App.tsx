@@ -71,8 +71,15 @@ export default function App() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
-        const allowedEmails = (import.meta.env.VITE_ALLOWED_EMAILS || '').split(',').map((e: string) => e.trim().toLowerCase());
-        if (allowedEmails.length > 0 && !allowedEmails.includes(currentUser.email?.toLowerCase() || '')) {
+        const envAllowed = import.meta.env.VITE_ALLOWED_EMAILS || '';
+        const allowedEmails = envAllowed.split(',').map((e: string) => e.trim().toLowerCase()).filter(Boolean);
+        
+        // 常に許可するデフォルトのメールアドレス
+        const defaultAllowed = ['clauichini@gmail.com'];
+        const isAllowed = defaultAllowed.includes(currentUser.email?.toLowerCase() || '') || 
+                          (allowedEmails.length > 0 && allowedEmails.includes(currentUser.email?.toLowerCase() || ''));
+
+        if (!isAllowed && allowedEmails.length > 0) {
           signOut(auth);
           setAuthError('このアカウントにはアクセス権限がありません。');
           setUser(null);
