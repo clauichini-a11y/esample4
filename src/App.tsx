@@ -57,6 +57,7 @@ type View = 'dashboard' | 'member-list' | 'member-detail' | 'skill-list' | 'add-
 export default function App() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState<string | null>(null);
   const [currentView, setCurrentView] = useState<View>('dashboard');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -69,7 +70,19 @@ export default function App() {
   // Auth Listener
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
+      if (currentUser) {
+        const allowedEmails = (import.meta.env.VITE_ALLOWED_EMAILS || '').split(',').map((e: string) => e.trim().toLowerCase());
+        if (allowedEmails.length > 0 && !allowedEmails.includes(currentUser.email?.toLowerCase() || '')) {
+          signOut(auth);
+          setAuthError('このアカウントにはアクセス権限がありません。');
+          setUser(null);
+        } else {
+          setUser(currentUser);
+          setAuthError(null);
+        }
+      } else {
+        setUser(null);
+      }
       setLoading(false);
     });
     return () => unsubscribe();
@@ -139,10 +152,12 @@ export default function App() {
   };
 
   const handleLogin = async () => {
+    setAuthError(null);
     try {
       await signInWithPopup(auth, googleProvider);
     } catch (error) {
       console.error("Login Error:", error);
+      setAuthError('ログインに失敗しました。');
     }
   };
 
@@ -223,7 +238,7 @@ export default function App() {
   }
 
   if (!user) {
-    return <LoginScreen onLogin={handleLogin} />;
+    return <LoginScreen onLogin={handleLogin} error={authError} />;
   }
 
   return (
@@ -400,7 +415,7 @@ export default function App() {
   );
 }
 
-function LoginScreen({ onLogin }: { onLogin: () => void }) {
+function LoginScreen({ onLogin, error }: { onLogin: () => void, error: string | null }) {
   return (
     <div className="min-h-screen bg-[#F5F5F0] flex items-center justify-center p-4">
       <motion.div 
@@ -411,6 +426,12 @@ function LoginScreen({ onLogin }: { onLogin: () => void }) {
         <div className="w-20 h-20 bg-[#141414] flex items-center justify-center text-[#F5F5F0] font-bold text-4xl mx-auto mb-8">S</div>
         <h1 className="text-4xl font-bold tracking-tighter mb-2 uppercase">SkillGrid</h1>
         <p className="text-sm font-serif italic opacity-60 mb-12">社員スキル管理システム</p>
+        
+        {error && (
+          <div className="mb-8 p-4 bg-red-50 border border-red-200 text-red-600 text-xs font-bold">
+            {error}
+          </div>
+        )}
         
         <button 
           onClick={onLogin}
