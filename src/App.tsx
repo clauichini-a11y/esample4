@@ -30,7 +30,24 @@ import {
   CATEGORIES 
 } from './types';
 import { mockUsers, mockSkillMaster, mockUserSkills } from './mockData';
-import { auth, googleProvider, signInWithPopup, signOut, onAuthStateChanged } from './firebase';
+import { 
+  auth, 
+  googleProvider, 
+  signInWithPopup, 
+  signOut, 
+  onAuthStateChanged,
+  db
+} from './firebase';
+import { 
+  collection, 
+  addDoc, 
+  onSnapshot, 
+  query, 
+  orderBy, 
+  setDoc, 
+  doc,
+  getDocs
+} from 'firebase/firestore';
 import { User as FirebaseUser } from 'firebase/auth';
 
 type View = 'dashboard' | 'member-list' | 'member-detail' | 'skill-list' | 'add-member' | 'add-skill';
@@ -42,16 +59,10 @@ export default function App() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
-  // Data State with LocalStorage Persistence
-  const [users, setUsers] = useState<UserType[]>(() => {
-    const saved = localStorage.getItem('skillgrid_users');
-    return saved ? JSON.parse(saved) : mockUsers;
-  });
+  // Data State
+  const [users, setUsers] = useState<UserType[]>([]);
   const [skills, setSkills] = useState<SkillMaster[]>(mockSkillMaster);
-  const [userSkills, setUserSkills] = useState<UserSkill[]>(() => {
-    const saved = localStorage.getItem('skillgrid_user_skills');
-    return saved ? JSON.parse(saved) : mockUserSkills;
-  });
+  const [userSkills, setUserSkills] = useState<UserSkill[]>([]);
 
   // Auth Listener
   useEffect(() => {
@@ -62,14 +73,43 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // Persistence Effects
+  // Firestore Listeners
   useEffect(() => {
-    localStorage.setItem('skillgrid_users', JSON.stringify(users));
-  }, [users]);
+    if (!user) return;
 
-  useEffect(() => {
-    localStorage.setItem('skillgrid_user_skills', JSON.stringify(userSkills));
-  }, [userSkills]);
+    // Listen to Users
+    const unsubUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
+      const usersData = snapshot.docs.map(doc => doc.data() as UserType);
+      
+      // Initial seed if empty
+      if (snapshot.empty) {
+        mockUsers.forEach(async (u) => {
+          await setDoc(doc(db, 'users', u.id), u);
+        });
+      } else {
+        setUsers(usersData);
+      }
+    });
+
+    // Listen to UserSkills
+    const unsubUserSkills = onSnapshot(collection(db, 'userSkills'), (snapshot) => {
+      const skillsData = snapshot.docs.map(doc => doc.data() as UserSkill);
+      
+      // Initial seed if empty
+      if (snapshot.empty) {
+        mockUserSkills.forEach(async (us) => {
+          await addDoc(collection(db, 'userSkills'), us);
+        });
+      } else {
+        setUserSkills(skillsData);
+      }
+    });
+
+    return () => {
+      unsubUsers();
+      unsubUserSkills();
+    };
+  }, [user]);
 
   // Search/Filter State
   const [searchQuery, setSearchQuery] = useState('');
@@ -270,9 +310,13 @@ export default function App() {
               )}
               {currentView === 'add-member' && (
                 <AddMemberView 
-                  onAdd={(user) => {
-                    setUsers([...users, user]);
-                    navigateTo('member-list');
+                  onAdd={async (newUser) => {
+                    try {
+                      await setDoc(doc(db, 'users', newUser.id), newUser);
+                      navigateTo('member-list');
+                    } catch (error) {
+                      console.error("Error adding member:", error);
+                    }
                   }} 
                 />
               )}
@@ -280,9 +324,13 @@ export default function App() {
                 <AddSkillView 
                   users={users}
                   skills={skills}
-                  onAdd={(us) => {
-                    setUserSkills([...userSkills, us]);
-                    navigateTo('skill-list');
+                  onAdd={async (us) => {
+                    try {
+                      await addDoc(collection(db, 'userSkills'), us);
+                      navigateTo('skill-list');
+                    } catch (error) {
+                      console.error("Error adding skill:", error);
+                    }
                   }} 
                 />
               )}

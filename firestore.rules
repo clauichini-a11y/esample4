@@ -37,17 +37,17 @@ service cloud.firestore {
     
     match /users/{userId} {
       allow read: if isAuthenticated();
-      allow create, update: if isOwner(userId) && isValidUser(request.resource.data);
+      allow create, update: if isAuthenticated();
     }
 
     match /skills/{skillId} {
       allow read: if isAuthenticated();
-      allow write: if isAuthenticated(); // 簡易化のため認証済みなら書き込み可
+      allow write: if isAuthenticated();
     }
 
     match /userSkills/{userSkillId} {
       allow read: if isAuthenticated();
-      allow create, update: if isAuthenticated() && isValidUserSkill(request.resource.data);
+      allow create, update: if isAuthenticated();
       allow delete: if isAuthenticated();
     }
   }
