@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   LayoutDashboard, 
   Users, 
@@ -16,11 +16,13 @@ import {
   X, 
   Info,
   ArrowLeft,
-  Filter
+  Filter,
+  LogOut,
+  LogIn
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  User, 
+  User as UserType, 
   SkillMaster, 
   UserSkill, 
   SkillLevel, 
@@ -28,16 +30,20 @@ import {
   CATEGORIES 
 } from './types';
 import { mockUsers, mockSkillMaster, mockUserSkills } from './mockData';
+import { auth, googleProvider, signInWithPopup, signOut, onAuthStateChanged } from './firebase';
+import { User as FirebaseUser } from 'firebase/auth';
 
 type View = 'dashboard' | 'member-list' | 'member-detail' | 'skill-list' | 'add-member' | 'add-skill';
 
 export default function App() {
+  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [loading, setLoading] = useState(true);
   const [currentView, setCurrentView] = useState<View>('dashboard');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
   // Data State with LocalStorage Persistence
-  const [users, setUsers] = useState<User[]>(() => {
+  const [users, setUsers] = useState<UserType[]>(() => {
     const saved = localStorage.getItem('skillgrid_users');
     return saved ? JSON.parse(saved) : mockUsers;
   });
@@ -47,12 +53,21 @@ export default function App() {
     return saved ? JSON.parse(saved) : mockUserSkills;
   });
 
+  // Auth Listener
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
   // Persistence Effects
-  React.useEffect(() => {
+  useEffect(() => {
     localStorage.setItem('skillgrid_users', JSON.stringify(users));
   }, [users]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     localStorage.setItem('skillgrid_user_skills', JSON.stringify(userSkills));
   }, [userSkills]);
 
@@ -66,6 +81,23 @@ export default function App() {
     setCurrentView(view);
     if (userId) setSelectedUserId(userId);
     setIsSidebarOpen(false);
+  };
+
+  const handleLogin = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (error) {
+      console.error("Login Error:", error);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setCurrentView('dashboard');
+    } catch (error) {
+      console.error("Logout Error:", error);
+    }
   };
 
   // Helper: Get skills for a specific user
@@ -91,12 +123,24 @@ export default function App() {
   const filteredEntries = useMemo(() => {
     return allSkillEntries.filter(entry => {
       const matchesSearch = entry.skill.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                            entry.user.name.toLowerCase().includes(searchQuery.toLowerCase());
+                            (entry.user?.name || "").toLowerCase().includes(searchQuery.toLowerCase());
       const matchesCategory = filterCategory === 'all' || entry.skill.category === filterCategory;
       const matchesLevel = filterLevel === 'all' || entry.level === filterLevel;
       return matchesSearch && matchesCategory && matchesLevel;
     }).sort((a, b) => b.level - a.level); // Sort by level descending
   }, [allSkillEntries, searchQuery, filterCategory, filterLevel]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#F5F5F0] flex items-center justify-center">
+        <div className="w-12 h-12 border-4 border-[#141414] border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <LoginScreen onLogin={handleLogin} />;
+  }
 
   return (
     <div className="min-h-screen bg-[#F5F5F0] text-[#141414] font-sans selection:bg-[#141414] selection:text-[#F5F5F0]">
@@ -157,9 +201,26 @@ export default function App() {
               active={currentView === 'add-skill'} 
               onClick={() => navigateTo('add-skill')} 
             />
+            
+            <div className="pt-8">
+              <button 
+                onClick={handleLogout}
+                className="w-full flex items-center gap-3 px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 transition-all"
+              >
+                <LogOut size={20} />
+                <span>ログアウト</span>
+              </button>
+            </div>
           </nav>
 
           <div className="absolute bottom-0 left-0 right-0 p-8 border-t border-[#141414]">
+            <div className="flex items-center gap-3 mb-4">
+              <img src={user.photoURL || ""} alt="" className="w-8 h-8 rounded-full border border-[#141414]/10" />
+              <div className="overflow-hidden">
+                <p className="text-xs font-bold truncate">{user.displayName}</p>
+                <p className="text-[10px] opacity-50 truncate">{user.email}</p>
+              </div>
+            </div>
             <p className="text-[10px] font-mono opacity-50">© 2026 SKILLGRID v1.0</p>
           </div>
         </aside>
@@ -233,6 +294,34 @@ export default function App() {
   );
 }
 
+function LoginScreen({ onLogin }: { onLogin: () => void }) {
+  return (
+    <div className="min-h-screen bg-[#F5F5F0] flex items-center justify-center p-4">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="max-w-md w-full bg-white border border-[#141414] p-12 text-center shadow-[20px_20px_0px_0px_rgba(20,20,20,0.05)]"
+      >
+        <div className="w-20 h-20 bg-[#141414] flex items-center justify-center text-[#F5F5F0] font-bold text-4xl mx-auto mb-8">S</div>
+        <h1 className="text-4xl font-bold tracking-tighter mb-2 uppercase">SkillGrid</h1>
+        <p className="text-sm font-serif italic opacity-60 mb-12">社員スキル管理システム</p>
+        
+        <button 
+          onClick={onLogin}
+          className="w-full flex items-center justify-center gap-3 py-4 bg-[#141414] text-[#F5F5F0] font-bold uppercase tracking-widest hover:bg-[#141414]/90 transition-all group"
+        >
+          <LogIn size={20} className="group-hover:translate-x-1 transition-transform" />
+          Googleでログイン
+        </button>
+        
+        <p className="mt-8 text-[10px] font-mono opacity-40 uppercase tracking-widest leading-relaxed">
+          社内アカウントを使用して<br />システムにアクセスしてください
+        </p>
+      </motion.div>
+    </div>
+  );
+}
+
 // --- Components ---
 
 function NavItem({ icon, label, active, onClick }: { icon: React.ReactNode, label: string, active: boolean, onClick: () => void }) {
@@ -279,7 +368,7 @@ function StarRating({ level, size = 16 }: { level: number, size?: number }) {
 // --- Views ---
 
 function DashboardView({ users, skills, userSkills, onNavigate }: { 
-  users: User[], 
+  users: UserType[], 
   skills: SkillMaster[], 
   userSkills: UserSkill[],
   onNavigate: (view: View) => void
@@ -356,7 +445,7 @@ function DashboardView({ users, skills, userSkills, onNavigate }: {
   );
 }
 
-function MemberListView({ users, onSelectMember }: { users: User[], onSelectMember: (id: string) => void }) {
+function MemberListView({ users, onSelectMember }: { users: UserType[], onSelectMember: (id: string) => void }) {
   return (
     <div>
       <SectionHeader title="Members" subtitle="スキルを保有するメンバの一覧" />
@@ -381,7 +470,7 @@ function MemberListView({ users, onSelectMember }: { users: User[], onSelectMemb
   );
 }
 
-function MemberDetailView({ user, skills, onBack }: { user: User, skills: any[], onBack: () => void }) {
+function MemberDetailView({ user, skills, onBack }: { user: UserType, skills: any[], onBack: () => void }) {
   return (
     <div>
       <button onClick={onBack} className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest mb-8 hover:gap-3 transition-all">
@@ -592,13 +681,13 @@ function SkillListView({
   );
 }
 
-function AddMemberView({ onAdd }: { onAdd: (user: User) => void }) {
+function AddMemberView({ onAdd }: { onAdd: (user: UserType) => void }) {
   const [formData, setFormData] = useState({ id: '', name: '', department: '' });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.id && formData.name && formData.department) {
-      onAdd(formData as User);
+      onAdd(formData as UserType);
     }
   };
 
@@ -652,7 +741,7 @@ function AddMemberView({ onAdd }: { onAdd: (user: User) => void }) {
   );
 }
 
-function AddSkillView({ users, skills, onAdd }: { users: User[], skills: SkillMaster[], onAdd: (us: UserSkill) => void }) {
+function AddSkillView({ users, skills, onAdd }: { users: UserType[], skills: SkillMaster[], onAdd: (us: UserSkill) => void }) {
   const [formData, setFormData] = useState<UserSkill>({
     userId: '',
     skillId: '',

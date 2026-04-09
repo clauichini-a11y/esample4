@@ -1,0 +1,55 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "社員の基本情報",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "社員番号" },
+        "name": { "type": "string", "description": "氏名" },
+        "department": { "type": "string", "description": "部署名" },
+        "uid": { "type": "string", "description": "Firebase AuthのUID" }
+      },
+      "required": ["id", "name", "department", "uid"]
+    },
+    "SkillMaster": {
+      "title": "SkillMaster",
+      "description": "スキルの定義",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "スキルID" },
+        "name": { "type": "string", "description": "スキル名" },
+        "category": { "type": "string", "description": "カテゴリ" }
+      },
+      "required": ["id", "name", "category"]
+    },
+    "UserSkill": {
+      "title": "UserSkill",
+      "description": "ユーザーごとのスキル習得状況",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "社員番号" },
+        "skillId": { "type": "string", "description": "スキルID" },
+        "level": { "type": "number", "description": "熟練度 (1-5)" },
+        "yearsOfExperience": { "type": "number", "description": "実務経験年数" },
+        "remarks": { "type": "string", "description": "備考" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "更新日時" }
+      },
+      "required": ["userId", "skillId", "level", "yearsOfExperience"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "社員情報コレクション"
+    },
+    "/skills/{skillId}": {
+      "schema": "SkillMaster",
+      "description": "スキルマスターコレクション"
+    },
+    "/userSkills/{userSkillId}": {
+      "schema": "UserSkill",
+      "description": "ユーザースキル紐付けコレクション"
+    }
+  }
+}

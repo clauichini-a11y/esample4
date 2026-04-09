@@ -1,0 +1,54 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // ===============================================================
+    // Validation Functions
+    // ===============================================================
+    function isValidUser(data) {
+      return data.keys().hasAll(['id', 'name', 'department', 'uid']) &&
+             data.id is string && data.id.size() > 0 && data.id.size() < 20 &&
+             data.name is string && data.name.size() > 0 && data.name.size() < 100 &&
+             data.department is string && data.department.size() > 0 && data.department.size() < 100 &&
+             data.uid == request.auth.uid;
+    }
+
+    function isValidUserSkill(data) {
+      return data.keys().hasAll(['userId', 'skillId', 'level', 'yearsOfExperience']) &&
+             data.userId is string &&
+             data.skillId is string &&
+             data.level is number && data.level >= 1 && data.level <= 5 &&
+             data.yearsOfExperience is number && data.yearsOfExperience >= 0;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+    
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isOwner(userId) && isValidUser(request.resource.data);
+    }
+
+    match /skills/{skillId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated(); // 簡易化のため認証済みなら書き込み可
+    }
+
+    match /userSkills/{userSkillId} {
+      allow read: if isAuthenticated();
+      allow create, update: if isAuthenticated() && isValidUserSkill(request.resource.data);
+      allow delete: if isAuthenticated();
+    }
+  }
+}
