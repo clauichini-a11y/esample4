@@ -49,6 +49,8 @@ import {
   getDocs
 } from 'firebase/firestore';
 import { User as FirebaseUser } from 'firebase/auth';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 
 type View = 'dashboard' | 'member-list' | 'member-detail' | 'skill-list' | 'add-member' | 'add-skill';
 
@@ -76,6 +78,18 @@ export default function App() {
   // Firestore Listeners
   useEffect(() => {
     if (!user) return;
+
+    // Listen to Skills
+    const unsubSkills = onSnapshot(collection(db, 'skills'), (snapshot) => {
+      const skillsData = snapshot.docs.map(doc => doc.data() as SkillMaster);
+      if (snapshot.empty) {
+        mockSkillMaster.forEach(async (s) => {
+          await setDoc(doc(db, 'skills', s.id), s);
+        });
+      } else {
+        setSkills(skillsData);
+      }
+    });
 
     // Listen to Users
     const unsubUsers = onSnapshot(collection(db, 'users'), (snapshot) => {
@@ -106,6 +120,7 @@ export default function App() {
     });
 
     return () => {
+      unsubSkills();
       unsubUsers();
       unsubUserSkills();
     };
@@ -137,6 +152,35 @@ export default function App() {
       setCurrentView('dashboard');
     } catch (error) {
       console.error("Logout Error:", error);
+    }
+  };
+
+  const exportToPDF = async (elementId: string, filename: string) => {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+
+    // Temporarily hide elements with 'no-pdf' class
+    const noPdfElements = element.querySelectorAll('.no-pdf');
+    noPdfElements.forEach(el => (el as HTMLElement).style.display = 'none');
+
+    try {
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#F5F5F0'
+      });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`${filename}.pdf`);
+    } catch (error) {
+      console.error("PDF Export Error:", error);
+    } finally {
+      noPdfElements.forEach(el => (el as HTMLElement).style.display = '');
     }
   };
 
@@ -266,7 +310,7 @@ export default function App() {
         </aside>
 
         {/* Main Content */}
-        <main className="flex-1 min-h-screen">
+        <main className="flex-1 min-h-screen" id="main-content">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentView + (selectedUserId || '')}
@@ -282,12 +326,14 @@ export default function App() {
                   skills={skills} 
                   userSkills={userSkills} 
                   onNavigate={navigateTo}
+                  onExport={() => exportToPDF('main-content', 'skillgrid-dashboard')}
                 />
               )}
               {currentView === 'member-list' && (
                 <MemberListView 
                   users={users} 
                   onSelectMember={(id) => navigateTo('member-detail', id)} 
+                  onExport={() => exportToPDF('main-content', 'skillgrid-members')}
                 />
               )}
               {currentView === 'member-detail' && selectedUserId && (
@@ -295,6 +341,10 @@ export default function App() {
                   user={users.find(u => u.id === selectedUserId)!} 
                   skills={getUserSkills(selectedUserId)}
                   onBack={() => navigateTo('member-list')}
+                  onExport={() => exportToPDF('main-content', `skillgrid-member-${selectedUserId}`)}
+                  onUpdateUser={async (updatedUser) => {
+                    await setDoc(doc(db, 'users', updatedUser.id), updatedUser);
+                  }}
                 />
               )}
               {currentView === 'skill-list' && (
@@ -306,13 +356,14 @@ export default function App() {
                   setFilterCategory={setFilterCategory}
                   filterLevel={filterLevel}
                   setFilterLevel={setFilterLevel}
+                  onExport={() => exportToPDF('main-content', 'skillgrid-skills')}
                 />
               )}
               {currentView === 'add-member' && (
                 <AddMemberView 
                   onAdd={async (newUser) => {
                     try {
-                      await setDoc(doc(db, 'users', newUser.id), newUser);
+                      await setDoc(doc(db, 'users', newUser.id), { ...newUser, workExperiences: [] });
                       navigateTo('member-list');
                     } catch (error) {
                       console.error("Error adding member:", error);
@@ -332,6 +383,13 @@ export default function App() {
                       console.error("Error adding skill:", error);
                     }
                   }} 
+                  onAddMaster={async (newMaster) => {
+                    try {
+                      await setDoc(doc(db, 'skills', newMaster.id), newMaster);
+                    } catch (error) {
+                      console.error("Error adding skill master:", error);
+                    }
+                  }}
                 />
               )}
             </motion.div>
@@ -415,11 +473,12 @@ function StarRating({ level, size = 16 }: { level: number, size?: number }) {
 
 // --- Views ---
 
-function DashboardView({ users, skills, userSkills, onNavigate }: { 
+function DashboardView({ users, skills, userSkills, onNavigate, onExport }: { 
   users: UserType[], 
   skills: SkillMaster[], 
   userSkills: UserSkill[],
-  onNavigate: (view: View) => void
+  onNavigate: (view: View) => void,
+  onExport: () => void
 }) {
   const stats = [
     { label: "登録メンバ", value: users.length, icon: <Users size={24} /> },
@@ -433,17 +492,29 @@ function DashboardView({ users, skills, userSkills, onNavigate }: {
       counts[us.skillId] = (counts[us.skillId] || 0) + 1;
     });
     return Object.entries(counts)
-      .map(([id, count]) => ({
-        skill: skills.find(s => s.id === id)!,
-        count
-      }))
+      .map(([id, count]) => {
+        const skill = skills.find(s => s.id === id);
+        return skill ? { skill, count } : null;
+      })
+      .filter((item): item is { skill: SkillMaster, count: number } => item !== null)
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
   }, [userSkills, skills]);
 
   return (
     <div>
-      <SectionHeader title="Dashboard" subtitle="組織のスキル資産の概要" />
+      <div className="flex justify-between items-end mb-12 border-b border-[#141414] pb-6">
+        <div>
+          <h1 className="text-5xl lg:text-7xl font-bold tracking-tighter mb-2 uppercase">Dashboard</h1>
+          <p className="text-lg italic font-serif opacity-60">組織のスキル資産の概要</p>
+        </div>
+        <button 
+          onClick={onExport}
+          className="no-pdf px-4 py-2 border border-[#141414] text-[10px] font-bold uppercase tracking-widest hover:bg-[#141414] hover:text-[#F5F5F0] transition-all"
+        >
+          Export PDF
+        </button>
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
         {stats.map((stat, i) => (
@@ -493,10 +564,21 @@ function DashboardView({ users, skills, userSkills, onNavigate }: {
   );
 }
 
-function MemberListView({ users, onSelectMember }: { users: UserType[], onSelectMember: (id: string) => void }) {
+function MemberListView({ users, onSelectMember, onExport }: { users: UserType[], onSelectMember: (id: string) => void, onExport: () => void }) {
   return (
     <div>
-      <SectionHeader title="Members" subtitle="スキルを保有するメンバの一覧" />
+      <div className="flex justify-between items-end mb-12 border-b border-[#141414] pb-6">
+        <div>
+          <h1 className="text-5xl lg:text-7xl font-bold tracking-tighter mb-2 uppercase">Members</h1>
+          <p className="text-lg italic font-serif opacity-60">スキルを保有するメンバの一覧</p>
+        </div>
+        <button 
+          onClick={onExport}
+          className="no-pdf px-4 py-2 border border-[#141414] text-[10px] font-bold uppercase tracking-widest hover:bg-[#141414] hover:text-[#F5F5F0] transition-all"
+        >
+          Export PDF
+        </button>
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-[#141414] border border-[#141414]">
         {users.map((user) => (
@@ -518,13 +600,42 @@ function MemberListView({ users, onSelectMember }: { users: UserType[], onSelect
   );
 }
 
-function MemberDetailView({ user, skills, onBack }: { user: UserType, skills: any[], onBack: () => void }) {
+function MemberDetailView({ user, skills, onBack, onExport, onUpdateUser }: { 
+  user: UserType, 
+  skills: any[], 
+  onBack: () => void,
+  onExport: () => void,
+  onUpdateUser: (user: UserType) => void
+}) {
+  const [isAddingExp, setIsAddingExp] = useState(false);
+  const [newExp, setNewExp] = useState({ date: '', description: '' });
+
+  const handleAddExp = () => {
+    if (newExp.date && newExp.description) {
+      const updatedUser = {
+        ...user,
+        workExperiences: [...(user.workExperiences || []), newExp]
+      };
+      onUpdateUser(updatedUser);
+      setNewExp({ date: '', description: '' });
+      setIsAddingExp(false);
+    }
+  };
+
   return (
     <div>
-      <button onClick={onBack} className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest mb-8 hover:gap-3 transition-all">
-        <ArrowLeft size={16} />
-        戻る
-      </button>
+      <div className="flex justify-between items-start mb-8 no-pdf">
+        <button onClick={onBack} className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:gap-3 transition-all">
+          <ArrowLeft size={16} />
+          戻る
+        </button>
+        <button 
+          onClick={onExport}
+          className="px-4 py-2 border border-[#141414] text-[10px] font-bold uppercase tracking-widest hover:bg-[#141414] hover:text-[#F5F5F0] transition-all"
+        >
+          Export PDF
+        </button>
+      </div>
 
       <div className="flex flex-col lg:flex-row gap-12 mb-12">
         <div className="lg:w-1/3">
@@ -534,7 +645,8 @@ function MemberDetailView({ user, skills, onBack }: { user: UserType, skills: an
             </div>
             <h1 className="text-5xl font-bold tracking-tighter mb-2">{user.name}</h1>
             <p className="text-xl font-serif italic opacity-60 mb-6">{user.department}</p>
-            <div className="space-y-2 border-t border-[#141414] pt-6">
+            
+            <div className="space-y-2 border-t border-[#141414] pt-6 mb-12">
               <div className="flex justify-between text-sm">
                 <span className="opacity-50">社員番号</span>
                 <span className="font-mono">{user.id}</span>
@@ -542,6 +654,52 @@ function MemberDetailView({ user, skills, onBack }: { user: UserType, skills: an
               <div className="flex justify-between text-sm">
                 <span className="opacity-50">登録スキル数</span>
                 <span className="font-mono">{skills.length}</span>
+              </div>
+            </div>
+
+            <div className="border-t border-[#141414] pt-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xs font-bold uppercase tracking-widest opacity-40">職務経歴</h3>
+                <button 
+                  onClick={() => setIsAddingExp(!isAddingExp)}
+                  className="no-pdf p-1 hover:bg-[#141414]/5 rounded transition-colors"
+                >
+                  <Plus size={16} />
+                </button>
+              </div>
+
+              {isAddingExp && (
+                <div className="no-pdf mb-6 p-4 bg-white border border-[#141414] space-y-3">
+                  <input 
+                    type="text" 
+                    placeholder="YYYY/MM"
+                    value={newExp.date}
+                    onChange={(e) => setNewExp({...newExp, date: e.target.value})}
+                    className="w-full px-3 py-2 text-xs border border-[#141414]/10 outline-none focus:border-[#141414]"
+                  />
+                  <textarea 
+                    placeholder="職務内容"
+                    value={newExp.description}
+                    onChange={(e) => setNewExp({...newExp, description: e.target.value})}
+                    className="w-full px-3 py-2 text-xs border border-[#141414]/10 outline-none focus:border-[#141414] resize-none"
+                    rows={2}
+                  />
+                  <button 
+                    onClick={handleAddExp}
+                    className="w-full py-2 bg-[#141414] text-[#F5F5F0] text-[10px] font-bold uppercase tracking-widest"
+                  >
+                    追加
+                  </button>
+                </div>
+              )}
+
+              <div className="space-y-4">
+                {user.workExperiences?.map((exp, i) => (
+                  <div key={i} className="border-l-2 border-[#141414] pl-4 py-1">
+                    <span className="text-[10px] font-mono opacity-50 block mb-1">{exp.date}</span>
+                    <p className="text-xs leading-relaxed">{exp.description}</p>
+                  </div>
+                )) || <p className="text-xs opacity-40 italic">経歴が登録されていません</p>}
               </div>
             </div>
           </div>
@@ -601,7 +759,8 @@ function SkillListView({
   filterCategory, 
   setFilterCategory,
   filterLevel,
-  setFilterLevel
+  setFilterLevel,
+  onExport
 }: { 
   entries: any[],
   searchQuery: string,
@@ -609,13 +768,25 @@ function SkillListView({
   filterCategory: string,
   setFilterCategory: (c: string) => void,
   filterLevel: number | 'all',
-  setFilterLevel: (l: number | 'all') => void
+  setFilterLevel: (l: number | 'all') => void,
+  onExport: () => void
 }) {
   const [showDefinitions, setShowDefinitions] = useState(false);
 
   return (
     <div>
-      <SectionHeader title="Skill List" subtitle="全メンバのスキル習得状況" />
+      <div className="flex justify-between items-end mb-12 border-b border-[#141414] pb-6">
+        <div>
+          <h1 className="text-5xl lg:text-7xl font-bold tracking-tighter mb-2 uppercase">Skill List</h1>
+          <p className="text-lg italic font-serif opacity-60">全メンバのスキル習得状況</p>
+        </div>
+        <button 
+          onClick={onExport}
+          className="no-pdf px-4 py-2 border border-[#141414] text-[10px] font-bold uppercase tracking-widest hover:bg-[#141414] hover:text-[#F5F5F0] transition-all"
+        >
+          Export PDF
+        </button>
+      </div>
 
       {/* Search & Filter Bar */}
       <div className="bg-white border border-[#141414] p-6 mb-8 flex flex-col lg:flex-row gap-4 items-end">
@@ -789,7 +960,12 @@ function AddMemberView({ onAdd }: { onAdd: (user: UserType) => void }) {
   );
 }
 
-function AddSkillView({ users, skills, onAdd }: { users: UserType[], skills: SkillMaster[], onAdd: (us: UserSkill) => void }) {
+function AddSkillView({ users, skills, onAdd, onAddMaster }: { 
+  users: UserType[], 
+  skills: SkillMaster[], 
+  onAdd: (us: UserSkill) => void,
+  onAddMaster: (s: SkillMaster) => void
+}) {
   const [formData, setFormData] = useState<UserSkill>({
     userId: '',
     skillId: '',
@@ -798,6 +974,9 @@ function AddSkillView({ users, skills, onAdd }: { users: UserType[], skills: Ski
     remarks: ''
   });
 
+  const [isAddingMaster, setIsAddingMaster] = useState(false);
+  const [newMaster, setNewMaster] = useState({ name: '', category: CATEGORIES[0] });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.userId && formData.skillId) {
@@ -805,10 +984,63 @@ function AddSkillView({ users, skills, onAdd }: { users: UserType[], skills: Ski
     }
   };
 
+  const handleAddMaster = () => {
+    if (newMaster.name) {
+      const id = `SKILL_${Date.now()}`;
+      onAddMaster({ id, ...newMaster });
+      setNewMaster({ name: '', category: CATEGORIES[0] });
+      setIsAddingMaster(false);
+    }
+  };
+
   return (
     <div className="max-w-2xl">
       <SectionHeader title="Register Skill" subtitle="メンバのスキル習得状況を登録" />
       
+      <div className="mb-12">
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-xs font-bold uppercase tracking-widest opacity-40">スキルの選択肢を追加</h3>
+          <button 
+            onClick={() => setIsAddingMaster(!isAddingMaster)}
+            className="p-2 border border-[#141414] hover:bg-[#141414] hover:text-[#F5F5F0] transition-all"
+          >
+            {isAddingMaster ? <X size={16} /> : <Plus size={16} />}
+          </button>
+        </div>
+
+        {isAddingMaster && (
+          <div className="bg-white border border-[#141414] p-6 space-y-4 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-widest mb-2 block opacity-40">スキル名</label>
+                <input 
+                  type="text"
+                  value={newMaster.name}
+                  onChange={(e) => setNewMaster({...newMaster, name: e.target.value})}
+                  className="w-full px-4 py-2 bg-[#F5F5F0] border border-[#141414]/10 focus:border-[#141414] outline-none"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-widest mb-2 block opacity-40">カテゴリ</label>
+                <select 
+                  value={newMaster.category}
+                  onChange={(e) => setNewMaster({...newMaster, category: e.target.value})}
+                  className="w-full px-4 py-2 bg-[#F5F5F0] border border-[#141414]/10 focus:border-[#141414] outline-none appearance-none cursor-pointer"
+                >
+                  {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+            </div>
+            <button 
+              onClick={handleAddMaster}
+              className="w-full py-3 bg-[#141414] text-[#F5F5F0] text-xs font-bold uppercase tracking-widest"
+            >
+              スキルマスターに追加
+            </button>
+          </div>
+        )}
+      </div>
+
       <form onSubmit={handleSubmit} className="bg-white border border-[#141414] p-8 space-y-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div>

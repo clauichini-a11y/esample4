@@ -11,10 +11,16 @@ export interface SkillMaster {
   category: string;
 }
 
+export interface WorkExperience {
+  date: string;
+  description: string;
+}
+
 export interface User {
   id: string; // 社員番号
   name: string; // 氏名
   department: string; // 部署名
+  workExperiences?: WorkExperience[];
 }
 
 export interface UserSkill {
