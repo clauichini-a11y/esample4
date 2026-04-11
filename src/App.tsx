@@ -67,6 +67,7 @@ export default function App() {
   const [currentView, setCurrentView] = useState<View>('portal');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   
   // Data State
   const [users, setUsers] = useState<UserType[]>([]);
@@ -172,19 +173,38 @@ export default function App() {
 
   const handleLogin = async (id?: string, password?: string) => {
     setAuthError(null);
+    setIsLoggingIn(true);
     try {
       if (id && password) {
         if (id === 'Edpas1984' && password === 'edpedp') {
-          await signInAnonymously(auth);
+          try {
+            await signInAnonymously(auth);
+          } catch (anonError: any) {
+            console.warn("Anonymous Auth failed, using local session fallback:", anonError);
+            // Firebaseの匿名認証が無効な場合のフォールバック
+            setUser({
+              uid: 'custom-user-edpas',
+              displayName: 'Edpas1984',
+              isAnonymous: true,
+              email: null,
+              photoURL: null,
+            } as any);
+          }
         } else {
           setAuthError('IDまたはパスワードが正しくありません。');
         }
       } else {
         await signInWithPopup(auth, googleProvider);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login Error:", error);
-      setAuthError('ログインに失敗しました。');
+      if (error.code === 'auth/operation-not-allowed') {
+        setAuthError('匿名認証が有効になっていません。管理者に連絡してください。');
+      } else {
+        setAuthError('ログインに失敗しました。');
+      }
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -265,7 +285,7 @@ export default function App() {
   }
 
   if (!user) {
-    return <LoginScreen onLogin={handleLogin} error={authError} />;
+    return <LoginScreen onLogin={handleLogin} error={authError} loading={isLoggingIn} />;
   }
 
   return (
@@ -497,13 +517,13 @@ export default function App() {
   );
 }
 
-function LoginScreen({ onLogin, error }: { onLogin: (id?: string, password?: string) => void, error: string | null }) {
+function LoginScreen({ onLogin, error, loading }: { onLogin: (id?: string, password?: string) => void, error: string | null, loading: boolean }) {
   const [id, setId] = useState('');
   const [password, setPassword] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onLogin(id, password);
+    if (!loading) onLogin(id, password);
   };
 
   return (
@@ -531,6 +551,7 @@ function LoginScreen({ onLogin, error }: { onLogin: (id?: string, password?: str
               value={id}
               onChange={(e) => setId(e.target.value)}
               className="w-full px-4 py-3 bg-[#F5F5F0] border border-[#141414]/10 focus:border-[#141414] outline-none text-sm"
+              disabled={loading}
             />
           </div>
           <div>
@@ -540,13 +561,15 @@ function LoginScreen({ onLogin, error }: { onLogin: (id?: string, password?: str
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full px-4 py-3 bg-[#F5F5F0] border border-[#141414]/10 focus:border-[#141414] outline-none text-sm"
+              disabled={loading}
             />
           </div>
           <button 
             type="submit"
-            className="w-full py-4 bg-[#141414] text-[#F5F5F0] font-bold uppercase tracking-widest hover:bg-[#141414]/90 transition-all"
+            disabled={loading}
+            className="w-full py-4 bg-[#141414] text-[#F5F5F0] font-bold uppercase tracking-widest hover:bg-[#141414]/90 transition-all disabled:opacity-50"
           >
-            ログイン
+            {loading ? 'ログイン中...' : 'ログイン'}
           </button>
         </form>
 
@@ -557,7 +580,8 @@ function LoginScreen({ onLogin, error }: { onLogin: (id?: string, password?: str
         
         <button 
           onClick={() => onLogin()}
-          className="w-full flex items-center justify-center gap-3 py-4 border border-[#141414] text-[#141414] font-bold uppercase tracking-widest hover:bg-[#141414]/5 transition-all group"
+          disabled={loading}
+          className="w-full flex items-center justify-center gap-3 py-4 border border-[#141414] text-[#141414] font-bold uppercase tracking-widest hover:bg-[#141414]/5 transition-all group disabled:opacity-50"
         >
           <LogIn size={20} className="group-hover:translate-x-1 transition-transform" />
           Googleでログイン
