@@ -22,7 +22,12 @@ import {
   ExternalLink,
   ShieldCheck,
   UserCircle,
-  Home
+  Home,
+  BookOpen,
+  FileText,
+  Send,
+  ClipboardCheck,
+  Bell
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -695,28 +700,167 @@ function PortalView({ onNavigate }: { onNavigate: (view: View) => void }) {
 }
 
 function ExternalSiteView() {
+  const [hoveredRow, setHoveredRow] = useState<number | null>(null);
+  const [hoveredCol, setHoveredCol] = useState<number | null>(null);
+
   const pages = [
     { title: "認定制度について", content: "2025/9/19 ES事業部" },
-    { title: "目次", content: "1 認定制度について\n2 目的、背景、期待する効果\n3 運用方法\n4 効果測定\n5 その他\n6 各メンバへの依頼事項" },
-    { title: "①認定制度について", content: "本認定制度は、従業員に対する認定制度を定めることにより社員教育制度の合理化、社員評価制度の明確化による合理的な運営、および営業活動への寄与を目的として定める" },
-    { title: "②目的、背景、期待する効果", content: "目的、背景、期待する効果は次のとおり\nNo1 本制度の導入で教育体系を整備し改善を図る\nNo2、No3 本制度の導入で可視化を図り改善を図る\nNo4 選定～履修を個々の自主性に任せ任意とした結果形骸化が進んだため指定し改善を図る\nNo5 資格取得の先に繋がるものを手当て以外に設定し、クリアする間隔を利用し意欲の喚起を行うことで改善を図る" },
-    { title: "③運用方法", content: "（１）34分野の研修講座を履修\n（２）全研修を履修後、レポート提出\n（３）認定申請\n（４）審査\n（５）認定ランクの合議・決定\n（６）認定通知・フィードバック" },
+    { 
+      title: "②目的、背景、期待する効果", 
+      isTable: true,
+      headers: ["目的", "課題・背景", "期待する効果"],
+      rows: [
+        {
+          id: 1,
+          icon: <Database className="text-blue-500" />,
+          title: "教育体制、教育体系の整備",
+          purpose: "教育体制、教育体系の整備",
+          background: "未経験社員、ロースキル、習熟度の低い社員の参画難易度が高いため、難易度を低下させることが求められている",
+          effect: "新人、未経験着任率の向上（xx%→xx%）"
+        },
+        {
+          id: 2,
+          icon: <Search className="text-green-500" />,
+          title: "営業活動の合理化",
+          purpose: "営業活動の合理化",
+          background: "営業活動を行う際、案件にマッチするメンバの選定を営業担当のみでも可能とし営業活動の合理化が必要であった",
+          effect: "営業活動の稼働削減（xxH/月→xxH/月）"
+        },
+        {
+          id: 3,
+          icon: <ShieldCheck className="text-red-500" />,
+          title: "案件ミスマッチの防止",
+          purpose: "案件ミスマッチによるトラブル発生の歯止め",
+          background: "着任前に現場特化分野の教育を行う機会を設け、知見をフィードバックし着任前にミスマッチの確率を下げる活動が求められている。案件ミスマッチやスキル不足による離任歯止め策を講じる必要がある。",
+          effect: "離職率、離任率の低下（xx%→xx%）\n人の異動関連の上位層の調整稼働低減（xx%→xx%）"
+        },
+        {
+          id: 4,
+          icon: <Plus className="text-purple-500" />,
+          title: "外部研修利用の活性化",
+          purpose: "外部研修利用の活性化",
+          background: "外部研修制度の形骸化しているため改善する必要があった。個々に履修計画の立案を促すも腰が重い為、教育制度の見直しに併せ指定することとした",
+          effect: "外部研修制度を全員が活用しスキルレベルの底上げにつなげる（資格取得や単金アップにつなげる）"
+        },
+        {
+          id: 5,
+          icon: <Star className="text-yellow-500" />,
+          title: "スキルレベルの向上",
+          purpose: "スキルレベルの棚卸を行うことで、学習意欲や知識欲を喚起する",
+          background: "年次の深いメンバについて、業務輻輳やモチベーション低下によるスキルレベル停滞、向上心の低下の歯止めを行う必要がある",
+          effect: "資格取得や単金アップ（xx名→xx名）"
+        }
+      ]
+    },
+    { 
+      title: "③運用方法", 
+      isSteps: true,
+      steps: [
+        { id: 1, label: "研修履修", desc: "34分野の研修講座を履修", icon: <BookOpen size={24} /> },
+        { id: 2, label: "レポート提出", desc: "全研修を履修後、レポート提出", icon: <FileText size={24} /> },
+        { id: 3, label: "認定申請", desc: "ワークフローから認定申請", icon: <Send size={24} /> },
+        { id: 4, label: "審査", desc: "決裁者による内容の審査", icon: <ClipboardCheck size={24} /> },
+        { id: 5, label: "合議・決定", desc: "認定ランクの合議・決定", icon: <Users size={24} /> },
+        { id: 6, label: "通知・FB", desc: "認定通知・フィードバック", icon: <Bell size={24} /> },
+      ]
+    },
     { title: "認定ランク", content: "レベル７：エキスパート\nレベル６：準エキスパート\nレベル５：上級\nレベル４：準上級\nレベル３：中級\nレベル２：準中級\nレベル１：初級\n未経験：新卒社員、中途社員" },
   ];
 
   return (
     <div className="min-h-screen pb-24">
       <SectionHeader title="Document" subtitle="認定制度説明資料" />
-      <div className="space-y-12">
+      <div className="space-y-16">
         {pages.map((page, i) => (
-          <div key={i} className="bg-white border border-[#141414] p-12 shadow-[10px_10px_0px_0px_rgba(20,20,20,0.05)]">
+          <div key={i} className="bg-white border border-[#141414] p-8 lg:p-12 shadow-[10px_10px_0px_0px_rgba(20,20,20,0.05)]">
             <div className="flex justify-between items-center mb-8 border-b border-[#141414]/10 pb-4">
-              <h3 className="text-2xl font-bold tracking-tight">{page.title}</h3>
-              <span className="font-mono text-xs opacity-40">PAGE {i + 1} / {pages.length}</span>
+              <h3 className="text-2xl font-bold tracking-tight flex items-center gap-3">
+                <span className="w-8 h-8 bg-[#141414] text-[#F5F5F0] flex items-center justify-center text-sm font-mono">0{i + 1}</span>
+                {page.title}
+              </h3>
+              <span className="font-mono text-xs opacity-40 uppercase tracking-widest">Section {i + 1}</span>
             </div>
-            <div className="font-serif text-lg leading-relaxed whitespace-pre-wrap italic opacity-80">
-              {page.content}
-            </div>
+
+            {page.isTable ? (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse min-w-[800px]">
+                  <thead>
+                    <tr>
+                      <th className="p-4 border border-[#141414] bg-[#141414]/5 text-[10px] font-bold uppercase tracking-widest text-left w-16">No</th>
+                      {page.headers?.map((header, hIdx) => (
+                        <th 
+                          key={hIdx} 
+                          className={`p-4 border border-[#141414] text-[10px] font-bold uppercase tracking-widest text-left transition-colors duration-200 ${hoveredCol === hIdx ? 'bg-[#141414] text-[#F5F5F0]' : 'bg-[#141414]/5'}`}
+                          onMouseEnter={() => setHoveredCol(hIdx)}
+                          onMouseLeave={() => setHoveredCol(null)}
+                        >
+                          {header}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {page.rows?.map((row, rIdx) => (
+                      <tr 
+                        key={rIdx} 
+                        className={`transition-colors duration-200 ${hoveredRow === rIdx ? 'bg-[#141414]/5' : ''}`}
+                        onMouseEnter={() => setHoveredRow(rIdx)}
+                        onMouseLeave={() => setHoveredRow(null)}
+                      >
+                        <td className="p-4 border border-[#141414] text-center font-mono text-sm font-bold">{row.id}</td>
+                        <td className={`p-6 border border-[#141414] transition-colors duration-200 ${hoveredCol === 0 ? 'bg-[#141414]/5' : ''}`}>
+                          <div className="flex items-start gap-4">
+                            <div className="mt-1 p-2 bg-[#141414]/5 rounded-lg">{row.icon}</div>
+                            <div>
+                              <p className="whitespace-pre-wrap font-bold text-sm leading-relaxed">{row.purpose}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className={`p-6 border border-[#141414] transition-colors duration-200 ${hoveredCol === 1 ? 'bg-[#141414]/5' : ''}`}>
+                          <p className="text-sm leading-relaxed opacity-70 font-serif italic">{row.background}</p>
+                        </td>
+                        <td className={`p-6 border border-[#141414] transition-colors duration-200 ${hoveredCol === 2 ? 'bg-[#141414]/5' : ''}`}>
+                          <div className="flex items-start gap-2">
+                            <ChevronRight size={14} className="mt-1 flex-shrink-0 opacity-40" />
+                            <p className="text-xs font-bold leading-relaxed">{row.effect}</p>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : page.isSteps ? (
+              <div className="flex flex-nowrap overflow-x-auto pb-8 gap-4 custom-scrollbar">
+                {page.steps?.map((step, sIdx) => (
+                  <React.Fragment key={sIdx}>
+                    <div className="flex-shrink-0 w-64 group">
+                      <div className="bg-[#F5F5F0] border border-[#141414] p-8 h-full transition-all hover:-translate-y-1 hover:shadow-[10px_10px_0px_0px_rgba(20,20,20,0.1)]">
+                        <div className="flex justify-between items-start mb-6">
+                          <div className="w-12 h-12 bg-[#141414] text-[#F5F5F0] flex items-center justify-center rounded-full font-mono font-bold text-lg">
+                            {step.id}
+                          </div>
+                          <div className="opacity-20 group-hover:opacity-100 transition-opacity">
+                            {step.icon}
+                          </div>
+                        </div>
+                        <h4 className="text-xl font-bold mb-2 tracking-tight">{step.label}</h4>
+                        <p className="text-sm opacity-60 font-serif italic leading-relaxed">{step.desc}</p>
+                      </div>
+                    </div>
+                    {sIdx < (page.steps?.length || 0) - 1 && (
+                      <div className="flex items-center justify-center flex-shrink-0">
+                        <ChevronRight className="opacity-20" size={32} />
+                      </div>
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+            ) : (
+              <div className="font-serif text-lg leading-relaxed whitespace-pre-wrap italic opacity-80 pl-4 border-l-4 border-[#141414]">
+                {page.content}
+              </div>
+            )}
           </div>
         ))}
       </div>
