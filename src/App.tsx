@@ -18,7 +18,11 @@ import {
   ArrowLeft,
   Filter,
   LogOut,
-  LogIn
+  LogIn,
+  ExternalLink,
+  ShieldCheck,
+  UserCircle,
+  Home
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -27,7 +31,8 @@ import {
   UserSkill, 
   SkillLevel, 
   SKILL_LEVEL_DEFINITIONS, 
-  CATEGORIES 
+  CATEGORIES,
+  MemberProfile
 } from './types';
 import { mockUsers, mockSkillMaster, mockUserSkills } from './mockData';
 import { 
@@ -36,7 +41,8 @@ import {
   signInWithPopup, 
   signOut, 
   onAuthStateChanged,
-  db
+  db,
+  signInAnonymously
 } from './firebase';
 import { 
   collection, 
@@ -52,13 +58,13 @@ import { User as FirebaseUser } from 'firebase/auth';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
-type View = 'dashboard' | 'member-list' | 'member-detail' | 'skill-list' | 'add-member' | 'add-skill';
+type View = 'portal' | 'external-site' | 'member-mgmt-list' | 'member-mgmt-detail' | 'dashboard' | 'member-list' | 'member-detail' | 'skill-list' | 'add-member' | 'add-skill';
 
 export default function App() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [currentView, setCurrentView] = useState<View>('dashboard');
+  const [currentView, setCurrentView] = useState<View>('portal');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   
@@ -71,21 +77,27 @@ export default function App() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       if (currentUser) {
-        const envAllowed = import.meta.env.VITE_ALLOWED_EMAILS || '';
-        const allowedEmails = envAllowed.split(',').map((e: string) => e.trim().toLowerCase()).filter(Boolean);
-        
-        // 常に許可するデフォルトのメールアドレス
-        const defaultAllowed = ['clauichini@gmail.com'];
-        const isAllowed = defaultAllowed.includes(currentUser.email?.toLowerCase() || '') || 
-                          (allowedEmails.length > 0 && allowedEmails.includes(currentUser.email?.toLowerCase() || ''));
-
-        if (!isAllowed && allowedEmails.length > 0) {
-          signOut(auth);
-          setAuthError('このアカウントにはアクセス権限がありません。');
-          setUser(null);
-        } else {
+        // 匿名ログイン（カスタム認証）の場合は常に許可
+        if (currentUser.isAnonymous) {
           setUser(currentUser);
           setAuthError(null);
+        } else {
+          const envAllowed = import.meta.env.VITE_ALLOWED_EMAILS || '';
+          const allowedEmails = envAllowed.split(',').map((e: string) => e.trim().toLowerCase()).filter(Boolean);
+          
+          // 常に許可するデフォルトのメールアドレス
+          const defaultAllowed = ['clauichini@gmail.com'];
+          const isAllowed = defaultAllowed.includes(currentUser.email?.toLowerCase() || '') || 
+                            (allowedEmails.length > 0 && allowedEmails.includes(currentUser.email?.toLowerCase() || ''));
+
+          if (!isAllowed && allowedEmails.length > 0) {
+            signOut(auth);
+            setAuthError('このアカウントにはアクセス権限がありません。');
+            setUser(null);
+          } else {
+            setUser(currentUser);
+            setAuthError(null);
+          }
         }
       } else {
         setUser(null);
@@ -158,10 +170,18 @@ export default function App() {
     setIsSidebarOpen(false);
   };
 
-  const handleLogin = async () => {
+  const handleLogin = async (id?: string, password?: string) => {
     setAuthError(null);
     try {
-      await signInWithPopup(auth, googleProvider);
+      if (id && password) {
+        if (id === 'Edpas1984' && password === 'edpedp') {
+          await signInAnonymously(auth);
+        } else {
+          setAuthError('IDまたはパスワードが正しくありません。');
+        }
+      } else {
+        await signInWithPopup(auth, googleProvider);
+      }
     } catch (error) {
       console.error("Login Error:", error);
       setAuthError('ログインに失敗しました。');
@@ -252,7 +272,10 @@ export default function App() {
     <div className="min-h-screen bg-[#F5F5F0] text-[#141414] font-sans selection:bg-[#141414] selection:text-[#F5F5F0]">
       {/* Mobile Header */}
       <header className="lg:hidden flex items-center justify-between p-4 border-b border-[#141414]/10 bg-[#F5F5F0] sticky top-0 z-50">
-        <div className="flex items-center gap-2">
+        <div 
+          className="flex items-center gap-2 cursor-pointer"
+          onClick={() => navigateTo('portal')}
+        >
           <div className="w-8 h-8 bg-[#141414] flex items-center justify-center text-[#F5F5F0] font-bold text-lg">S</div>
           <span className="font-bold tracking-tight text-xl">SkillGrid</span>
         </div>
@@ -275,6 +298,15 @@ export default function App() {
 
           <nav className="p-4 space-y-1">
             <NavItem 
+              icon={<Home size={20} />} 
+              label="社内システムポータル" 
+              active={currentView === 'portal'} 
+              onClick={() => navigateTo('portal')} 
+            />
+            <div className="pt-4 pb-2 px-4">
+              <span className="text-[10px] font-bold uppercase tracking-widest opacity-40">スキル管理</span>
+            </div>
+            <NavItem 
               icon={<LayoutDashboard size={20} />} 
               label="ダッシュボード" 
               active={currentView === 'dashboard'} 
@@ -292,8 +324,29 @@ export default function App() {
               active={currentView === 'skill-list'} 
               onClick={() => navigateTo('skill-list')} 
             />
+            
             <div className="pt-4 pb-2 px-4">
-              <span className="text-[10px] font-bold uppercase tracking-widest opacity-40">管理</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest opacity-40">メンバ管理</span>
+            </div>
+            <NavItem 
+              icon={<UserCircle size={20} />} 
+              label="管理一覧" 
+              active={currentView === 'member-mgmt-list' || currentView === 'member-mgmt-detail'} 
+              onClick={() => navigateTo('member-mgmt-list')} 
+            />
+
+            <div className="pt-4 pb-2 px-4">
+              <span className="text-[10px] font-bold uppercase tracking-widest opacity-40">外部サイト</span>
+            </div>
+            <NavItem 
+              icon={<ExternalLink size={20} />} 
+              label="外部サイト" 
+              active={currentView === 'external-site'} 
+              onClick={() => navigateTo('external-site')} 
+            />
+
+            <div className="pt-4 pb-2 px-4">
+              <span className="text-[10px] font-bold uppercase tracking-widest opacity-40">登録</span>
             </div>
             <NavItem 
               icon={<Plus size={20} />} 
@@ -342,6 +395,28 @@ export default function App() {
               transition={{ duration: 0.2 }}
               className="p-4 lg:p-12 max-w-7xl mx-auto"
             >
+              {currentView === 'portal' && (
+                <PortalView onNavigate={navigateTo} />
+              )}
+              {currentView === 'external-site' && (
+                <ExternalSiteView />
+              )}
+              {currentView === 'member-mgmt-list' && (
+                <MemberMgmtListView 
+                  users={users} 
+                  onSelectMember={(id) => navigateTo('member-mgmt-detail', id)}
+                  onAddMember={() => navigateTo('add-member')}
+                />
+              )}
+              {currentView === 'member-mgmt-detail' && selectedUserId && (
+                <MemberMgmtDetailView 
+                  user={users.find(u => u.id === selectedUserId)!} 
+                  onBack={() => navigateTo('member-mgmt-list')}
+                  onUpdateUser={async (updatedUser) => {
+                    await setDoc(doc(db, 'users', updatedUser.id), updatedUser);
+                  }}
+                />
+              )}
               {currentView === 'dashboard' && (
                 <DashboardView 
                   users={users} 
@@ -422,7 +497,15 @@ export default function App() {
   );
 }
 
-function LoginScreen({ onLogin, error }: { onLogin: () => void, error: string | null }) {
+function LoginScreen({ onLogin, error }: { onLogin: (id?: string, password?: string) => void, error: string | null }) {
+  const [id, setId] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onLogin(id, password);
+  };
+
   return (
     <div className="min-h-screen bg-[#F5F5F0] flex items-center justify-center p-4">
       <motion.div 
@@ -439,10 +522,42 @@ function LoginScreen({ onLogin, error }: { onLogin: () => void, error: string | 
             {error}
           </div>
         )}
+
+        <form onSubmit={handleSubmit} className="space-y-4 mb-8">
+          <div>
+            <input 
+              type="text" 
+              placeholder="ログインID"
+              value={id}
+              onChange={(e) => setId(e.target.value)}
+              className="w-full px-4 py-3 bg-[#F5F5F0] border border-[#141414]/10 focus:border-[#141414] outline-none text-sm"
+            />
+          </div>
+          <div>
+            <input 
+              type="password" 
+              placeholder="パスワード"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full px-4 py-3 bg-[#F5F5F0] border border-[#141414]/10 focus:border-[#141414] outline-none text-sm"
+            />
+          </div>
+          <button 
+            type="submit"
+            className="w-full py-4 bg-[#141414] text-[#F5F5F0] font-bold uppercase tracking-widest hover:bg-[#141414]/90 transition-all"
+          >
+            ログイン
+          </button>
+        </form>
+
+        <div className="relative mb-8">
+          <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-[#141414]/10"></div></div>
+          <div className="relative flex justify-center text-[10px] uppercase tracking-widest"><span className="bg-white px-2 opacity-40">または</span></div>
+        </div>
         
         <button 
-          onClick={onLogin}
-          className="w-full flex items-center justify-center gap-3 py-4 bg-[#141414] text-[#F5F5F0] font-bold uppercase tracking-widest hover:bg-[#141414]/90 transition-all group"
+          onClick={() => onLogin()}
+          className="w-full flex items-center justify-center gap-3 py-4 border border-[#141414] text-[#141414] font-bold uppercase tracking-widest hover:bg-[#141414]/5 transition-all group"
         >
           <LogIn size={20} className="group-hover:translate-x-1 transition-transform" />
           Googleでログイン
@@ -500,6 +615,223 @@ function StarRating({ level, size = 16 }: { level: number, size?: number }) {
 }
 
 // --- Views ---
+
+function PortalView({ onNavigate }: { onNavigate: (view: View) => void }) {
+  const apps = [
+    { 
+      id: 'skill', 
+      title: '社員スキル管理システム', 
+      desc: 'スキルの可視化・検索・登録', 
+      icon: <Database size={32} />, 
+      view: 'dashboard' as View 
+    },
+    { 
+      id: 'mgmt', 
+      title: 'メンバ管理システム', 
+      desc: '成果・課題・性格・キャリアパス管理', 
+      icon: <UserCircle size={32} />, 
+      view: 'member-mgmt-list' as View 
+    },
+    { 
+      id: 'external', 
+      title: '外部サイト', 
+      desc: 'プレゼンテーション・外部リソース', 
+      icon: <ExternalLink size={32} />, 
+      view: 'external-site' as View 
+    },
+  ];
+
+  return (
+    <div className="py-12">
+      <SectionHeader title="Portal" subtitle="社内システムポータル" />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        {apps.map((app) => (
+          <motion.div 
+            key={app.id}
+            whileHover={{ y: -5 }}
+            onClick={() => onNavigate(app.view)}
+            className="bg-white border border-[#141414] p-10 cursor-pointer group hover:bg-[#141414] hover:text-[#F5F5F0] transition-all flex flex-col h-80 justify-between"
+          >
+            <div className="opacity-40 group-hover:opacity-100 transition-opacity">{app.icon}</div>
+            <div>
+              <h3 className="text-2xl font-bold mb-2 tracking-tight">{app.title}</h3>
+              <p className="text-sm opacity-60 group-hover:opacity-80 font-serif italic">{app.desc}</p>
+            </div>
+            <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
+              アクセスする <ChevronRight size={12} />
+            </div>
+          </motion.div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ExternalSiteView() {
+  const pages = [
+    { title: "認定制度について", content: "2025/9/19 ES事業部" },
+    { title: "目次", content: "1 認定制度について\n2 目的、背景、期待する効果\n3 運用方法\n4 効果測定\n5 その他\n6 各メンバへの依頼事項" },
+    { title: "①認定制度について", content: "本認定制度は、従業員に対する認定制度を定めることにより社員教育制度の合理化、社員評価制度の明確化による合理的な運営、および営業活動への寄与を目的として定める" },
+    { title: "②目的、背景、期待する効果", content: "目的、背景、期待する効果は次のとおり\nNo1 本制度の導入で教育体系を整備し改善を図る\nNo2、No3 本制度の導入で可視化を図り改善を図る\nNo4 選定～履修を個々の自主性に任せ任意とした結果形骸化が進んだため指定し改善を図る\nNo5 資格取得の先に繋がるものを手当て以外に設定し、クリアする間隔を利用し意欲の喚起を行うことで改善を図る" },
+    { title: "③運用方法", content: "（１）34分野の研修講座を履修\n（２）全研修を履修後、レポート提出\n（３）認定申請\n（４）審査\n（５）認定ランクの合議・決定\n（６）認定通知・フィードバック" },
+    { title: "認定ランク", content: "レベル７：エキスパート\nレベル６：準エキスパート\nレベル５：上級\nレベル４：準上級\nレベル３：中級\nレベル２：準中級\nレベル１：初級\n未経験：新卒社員、中途社員" },
+  ];
+
+  return (
+    <div className="min-h-screen pb-24">
+      <SectionHeader title="Document" subtitle="認定制度説明資料" />
+      <div className="space-y-12">
+        {pages.map((page, i) => (
+          <div key={i} className="bg-white border border-[#141414] p-12 shadow-[10px_10px_0px_0px_rgba(20,20,20,0.05)]">
+            <div className="flex justify-between items-center mb-8 border-b border-[#141414]/10 pb-4">
+              <h3 className="text-2xl font-bold tracking-tight">{page.title}</h3>
+              <span className="font-mono text-xs opacity-40">PAGE {i + 1} / {pages.length}</span>
+            </div>
+            <div className="font-serif text-lg leading-relaxed whitespace-pre-wrap italic opacity-80">
+              {page.content}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MemberMgmtListView({ users, onSelectMember, onAddMember }: { 
+  users: UserType[], 
+  onSelectMember: (id: string) => void,
+  onAddMember: () => void
+}) {
+  return (
+    <div>
+      <div className="flex justify-between items-end mb-12 border-b border-[#141414] pb-6">
+        <div>
+          <h1 className="text-5xl lg:text-7xl font-bold tracking-tighter mb-2 uppercase">Member Management</h1>
+          <p className="text-lg italic font-serif opacity-60">成果・課題・性格等の詳細管理</p>
+        </div>
+        <button 
+          onClick={onAddMember}
+          className="px-6 py-3 bg-[#141414] text-[#F5F5F0] text-[10px] font-bold uppercase tracking-widest hover:scale-105 transition-transform flex items-center gap-2"
+        >
+          <Plus size={16} /> メンバを追加
+        </button>
+      </div>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-[#141414] border border-[#141414]">
+        {users.map((user) => (
+          <div 
+            key={user.id} 
+            onClick={() => onSelectMember(user.id)}
+            className="bg-white p-8 group cursor-pointer hover:bg-[#141414] hover:text-[#F5F5F0] transition-all"
+          >
+            <div className="flex justify-between items-start mb-8">
+              <span className="font-mono text-[10px] opacity-40 group-hover:opacity-70">{user.id}</span>
+              <ChevronRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+            <h3 className="text-3xl font-bold tracking-tight mb-1">{user.name}</h3>
+            <p className="text-sm opacity-60 group-hover:opacity-80 mb-4">{user.department}</p>
+            <div className="pt-4 border-t border-[#141414]/10 group-hover:border-[#F5F5F0]/20">
+              <span className="text-[10px] font-bold uppercase tracking-widest opacity-40 group-hover:opacity-70">現在の業務</span>
+              <p className="text-xs truncate mt-1">{user.profile?.currentWork || '未登録'}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function MemberMgmtDetailView({ user, onBack, onUpdateUser }: { 
+  user: UserType, 
+  onBack: () => void,
+  onUpdateUser: (user: UserType) => void
+}) {
+  const [profile, setProfile] = useState<MemberProfile>(user.profile || {
+    achievements: '',
+    challenges: '',
+    personality: '',
+    careerPath: '',
+    currentWork: '',
+    interests: '',
+    hobbies: '',
+    commonMistakes: '',
+    remarks: ''
+  });
+
+  const [isEditing, setIsEditing] = useState(false);
+
+  const handleSave = () => {
+    onUpdateUser({ ...user, profile });
+    setIsEditing(false);
+  };
+
+  const fields = [
+    { key: 'achievements', label: '成果', icon: <Star size={16} /> },
+    { key: 'challenges', label: '課題', icon: <Info size={16} /> },
+    { key: 'personality', label: '性格', icon: <Users size={16} /> },
+    { key: 'careerPath', label: '本人希望キャリアパス', icon: <ChevronRight size={16} /> },
+    { key: 'currentWork', label: '現在の業務', icon: <Database size={16} /> },
+    { key: 'interests', label: '興味がある分野', icon: <Search size={16} /> },
+    { key: 'hobbies', label: '趣味嗜好', icon: <Star size={16} /> },
+    { key: 'commonMistakes', label: '起こしやすいミス', icon: <X size={16} /> },
+    { key: 'remarks', label: '備考', icon: <Info size={16} /> },
+  ];
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-12">
+        <button onClick={onBack} className="flex items-center gap-2 text-sm font-bold uppercase tracking-widest hover:gap-3 transition-all">
+          <ArrowLeft size={16} /> 戻る
+        </button>
+        <button 
+          onClick={() => isEditing ? handleSave() : setIsEditing(true)}
+          className="px-6 py-3 bg-[#141414] text-[#F5F5F0] text-[10px] font-bold uppercase tracking-widest hover:scale-105 transition-transform"
+        >
+          {isEditing ? '保存する' : '編集する'}
+        </button>
+      </div>
+
+      <div className="flex flex-col lg:flex-row gap-12">
+        <div className="lg:w-1/3">
+          <div className="sticky top-12">
+            <div className="w-32 h-32 bg-[#141414] text-[#F5F5F0] flex items-center justify-center text-5xl font-bold mb-6">
+              {user.name[0]}
+            </div>
+            <h1 className="text-5xl font-bold tracking-tighter mb-2">{user.name}</h1>
+            <p className="text-xl font-serif italic opacity-60 mb-6">{user.department}</p>
+            <div className="pt-6 border-t border-[#141414]">
+              <span className="text-[10px] font-bold uppercase tracking-widest opacity-40">社員番号</span>
+              <p className="font-mono text-xl">{user.id}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="lg:w-2/3 grid grid-cols-1 gap-8">
+          {fields.map((field) => (
+            <div key={field.key} className="bg-white border border-[#141414] p-8">
+              <div className="flex items-center gap-2 mb-4 opacity-40">
+                {field.icon}
+                <span className="text-[10px] font-bold uppercase tracking-widest">{field.label}</span>
+              </div>
+              {isEditing ? (
+                <textarea 
+                  value={(profile as any)[field.key]}
+                  onChange={(e) => setProfile({ ...profile, [field.key]: e.target.value })}
+                  className="w-full bg-[#F5F5F0] border border-[#141414]/10 p-4 text-sm outline-none focus:border-[#141414] min-h-[100px] resize-none font-serif italic"
+                  placeholder={`${field.label}を入力してください...`}
+                />
+              ) : (
+                <p className="text-lg leading-relaxed whitespace-pre-wrap">
+                  {(profile as any)[field.key] || <span className="opacity-20 italic">未登録</span>}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function DashboardView({ users, skills, userSkills, onNavigate, onExport }: { 
   users: UserType[], 

@@ -16,11 +16,24 @@ export interface WorkExperience {
   description: string;
 }
 
+export interface MemberProfile {
+  achievements: string;
+  challenges: string;
+  personality: string;
+  careerPath: string;
+  currentWork: string;
+  interests: string;
+  hobbies: string;
+  commonMistakes: string;
+  remarks: string;
+}
+
 export interface User {
   id: string; // 社員番号
   name: string; // 氏名
   department: string; // 部署名
   workExperiences?: WorkExperience[];
+  profile?: MemberProfile;
 }
 
 export interface UserSkill {
