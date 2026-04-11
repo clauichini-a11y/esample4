@@ -57,7 +57,8 @@ import {
   orderBy, 
   setDoc, 
   doc,
-  getDocs
+  getDocs,
+  deleteDoc
 } from 'firebase/firestore';
 import { User as FirebaseUser } from 'firebase/auth';
 import html2canvas from 'html2canvas';
@@ -434,6 +435,15 @@ export default function App() {
                   users={users} 
                   onSelectMember={(id) => navigateTo('member-mgmt-detail', id)}
                   onAddMember={() => navigateTo('add-member')}
+                  onDeleteMember={async (id) => {
+                    if (window.confirm('このメンバを削除してもよろしいですか？')) {
+                      try {
+                        await deleteDoc(doc(db, 'users', id));
+                      } catch (error) {
+                        console.error("Error deleting member:", error);
+                      }
+                    }
+                  }}
                 />
               )}
               {currentView === 'member-mgmt-detail' && selectedUserId && (
@@ -868,10 +878,11 @@ function ExternalSiteView() {
   );
 }
 
-function MemberMgmtListView({ users, onSelectMember, onAddMember }: { 
+function MemberMgmtListView({ users, onSelectMember, onAddMember, onDeleteMember }: { 
   users: UserType[], 
   onSelectMember: (id: string) => void,
-  onAddMember: () => void
+  onAddMember: () => void,
+  onDeleteMember: (id: string) => void
 }) {
   return (
     <div>
@@ -888,25 +899,47 @@ function MemberMgmtListView({ users, onSelectMember, onAddMember }: {
         </button>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-[#141414] border border-[#141414]">
-        {users.map((user) => (
-          <div 
-            key={user.id} 
-            onClick={() => onSelectMember(user.id)}
-            className="bg-white p-8 group cursor-pointer hover:bg-[#141414] hover:text-[#F5F5F0] transition-all"
-          >
-            <div className="flex justify-between items-start mb-8">
-              <span className="font-mono text-[10px] opacity-40 group-hover:opacity-70">{user.id}</span>
-              <ChevronRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-            <h3 className="text-3xl font-bold tracking-tight mb-1">{user.name}</h3>
-            <p className="text-sm opacity-60 group-hover:opacity-80 mb-4">{user.department}</p>
-            <div className="pt-4 border-t border-[#141414]/10 group-hover:border-[#F5F5F0]/20">
-              <span className="text-[10px] font-bold uppercase tracking-widest opacity-40 group-hover:opacity-70">現在の業務</span>
-              <p className="text-xs truncate mt-1">{user.profile?.currentWork || '未登録'}</p>
-            </div>
-          </div>
-        ))}
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="border-b-2 border-[#141414] text-left">
+              <th className="py-4 px-4 text-[10px] font-bold uppercase tracking-widest opacity-40">社員番号</th>
+              <th className="py-4 px-4 text-[10px] font-bold uppercase tracking-widest opacity-40">氏名</th>
+              <th className="py-4 px-4 text-[10px] font-bold uppercase tracking-widest opacity-40">部署名</th>
+              <th className="py-4 px-4 text-[10px] font-bold uppercase tracking-widest opacity-40">現在の業務</th>
+              <th className="py-4 px-4 text-[10px] font-bold uppercase tracking-widest opacity-40 text-right">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map((user) => (
+              <tr key={user.id} className="border-b border-[#141414]/10 hover:bg-[#141414]/5 transition-colors group">
+                <td className="py-4 px-4 font-mono text-xs">{user.id}</td>
+                <td className="py-4 px-4 font-bold cursor-pointer" onClick={() => onSelectMember(user.id)}>{user.name}</td>
+                <td className="py-4 px-4 text-sm">{user.department}</td>
+                <td className="py-4 px-4 text-xs truncate max-w-[200px]">{user.profile?.currentWork || '未登録'}</td>
+                <td className="py-4 px-4 text-right">
+                  <div className="flex justify-end gap-2">
+                    <button 
+                      onClick={() => onSelectMember(user.id)}
+                      className="p-2 hover:bg-[#141414] hover:text-[#F5F5F0] transition-colors"
+                    >
+                      <UserCircle size={16} />
+                    </button>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteMember(user.id);
+                      }}
+                      className="p-2 hover:bg-red-600 hover:text-white transition-colors text-red-600"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
@@ -1111,21 +1144,34 @@ function MemberListView({ users, onSelectMember, onExport }: { users: UserType[]
         </button>
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-[#141414] border border-[#141414]">
-        {users.map((user) => (
-          <div 
-            key={user.id} 
-            onClick={() => onSelectMember(user.id)}
-            className="bg-white p-8 group cursor-pointer hover:bg-[#141414] hover:text-[#F5F5F0] transition-all"
-          >
-            <div className="flex justify-between items-start mb-8">
-              <span className="font-mono text-xs opacity-40 group-hover:opacity-70">{user.id}</span>
-              <ChevronRight size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-            <h3 className="text-3xl font-bold tracking-tight mb-1">{user.name}</h3>
-            <p className="text-sm opacity-60 group-hover:opacity-80">{user.department}</p>
-          </div>
-        ))}
+      <div className="overflow-x-auto">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="border-b-2 border-[#141414] text-left">
+              <th className="py-4 px-4 text-[10px] font-bold uppercase tracking-widest opacity-40">社員番号</th>
+              <th className="py-4 px-4 text-[10px] font-bold uppercase tracking-widest opacity-40">氏名</th>
+              <th className="py-4 px-4 text-[10px] font-bold uppercase tracking-widest opacity-40">部署名</th>
+              <th className="py-4 px-4 text-[10px] font-bold uppercase tracking-widest opacity-40 text-right">操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            {users.map((user) => (
+              <tr key={user.id} className="border-b border-[#141414]/10 hover:bg-[#141414]/5 transition-colors group">
+                <td className="py-4 px-4 font-mono text-xs">{user.id}</td>
+                <td className="py-4 px-4 font-bold cursor-pointer" onClick={() => onSelectMember(user.id)}>{user.name}</td>
+                <td className="py-4 px-4 text-sm">{user.department}</td>
+                <td className="py-4 px-4 text-right">
+                  <button 
+                    onClick={() => onSelectMember(user.id)}
+                    className="p-2 hover:bg-[#141414] hover:text-[#F5F5F0] transition-colors"
+                  >
+                    <ChevronRight size={16} />
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
