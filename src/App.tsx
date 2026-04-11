@@ -64,7 +64,7 @@ import { User as FirebaseUser } from 'firebase/auth';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
-type View = 'portal' | 'external-site' | 'member-mgmt-list' | 'member-mgmt-detail' | 'dashboard' | 'member-list' | 'member-detail' | 'skill-list' | 'add-member' | 'add-skill';
+type View = 'portal' | 'certification-system' | 'member-mgmt-list' | 'member-mgmt-detail' | 'dashboard' | 'member-list' | 'member-detail' | 'skill-list' | 'add-member' | 'add-skill';
 
 export default function App() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
@@ -362,13 +362,13 @@ export default function App() {
             />
 
             <div className="pt-4 pb-2 px-4">
-              <span className="text-[10px] font-bold uppercase tracking-widest opacity-40">外部サイト</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest opacity-40">認定制度について</span>
             </div>
             <NavItem 
-              icon={<ExternalLink size={20} />} 
-              label="外部サイト" 
-              active={currentView === 'external-site'} 
-              onClick={() => navigateTo('external-site')} 
+              icon={<BookOpen size={20} />} 
+              label="認定制度について" 
+              active={currentView === 'certification-system'} 
+              onClick={() => navigateTo('certification-system')} 
             />
 
             <div className="pt-4 pb-2 px-4">
@@ -427,8 +427,8 @@ export default function App() {
               {currentView === 'portal' && (
                 <PortalView onNavigate={navigateTo} />
               )}
-              {currentView === 'external-site' && (
-                <ExternalSiteView />
+              {currentView === 'certification-system' && (
+                <CertificationSystemView />
               )}
               {currentView === 'member-mgmt-list' && (
                 <MemberMgmtListView 
@@ -676,10 +676,10 @@ function PortalView({ onNavigate }: { onNavigate: (view: View) => void }) {
     },
     { 
       id: 'external', 
-      title: '外部サイト', 
-      desc: 'プレゼンテーション・外部リソース', 
-      icon: <ExternalLink size={32} />, 
-      view: 'external-site' as View 
+      title: '認定制度について', 
+      desc: '認定制度の説明・運用方法・ランク定義', 
+      icon: <BookOpen size={32} />, 
+      view: 'certification-system' as View 
     },
   ];
 
@@ -709,12 +709,13 @@ function PortalView({ onNavigate }: { onNavigate: (view: View) => void }) {
   );
 }
 
-function ExternalSiteView() {
+function CertificationSystemView() {
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const [hoveredCol, setHoveredCol] = useState<number | null>(null);
 
   const pages = [
     { title: "認定制度について", content: "2025/9/19 ES事業部" },
+    { title: "目次", content: "1 認定制度について\n2 目的、背景、期待する効果\n3 運用方法\n4 認定ランク" },
     { 
       title: "②目的、背景、期待する効果", 
       isTable: true,
@@ -766,20 +767,33 @@ function ExternalSiteView() {
       title: "③運用方法", 
       isSteps: true,
       steps: [
-        { id: 1, label: "研修履修", desc: "34分野の研修講座を履修", icon: <BookOpen size={24} /> },
-        { id: 2, label: "レポート提出", desc: "全研修を履修後、レポート提出", icon: <FileText size={24} /> },
-        { id: 3, label: "認定申請", desc: "ワークフローから認定申請", icon: <Send size={24} /> },
-        { id: 4, label: "審査", desc: "決裁者による内容の審査", icon: <ClipboardCheck size={24} /> },
-        { id: 5, label: "合議・決定", desc: "認定ランクの合議・決定", icon: <Users size={24} /> },
-        { id: 6, label: "通知・FB", desc: "認定通知・フィードバック", icon: <Bell size={24} /> },
+        { id: 1, label: "研修履修", desc: "34分野の研修講座を履修", icon: <BookOpen size={24} />, color: "bg-[#4361EE]" },
+        { id: 2, label: "レポート提出", desc: "全研修を履修後、レポート提出", icon: <FileText size={24} />, color: "bg-[#3A0CA3]" },
+        { id: 3, label: "認定申請", desc: "ワークフローから認定申請", icon: <Send size={24} />, color: "bg-[#7209B7]" },
+        { id: 4, label: "審査", desc: "決裁者による内容の審査", icon: <ClipboardCheck size={24} />, color: "bg-[#B5179E]" },
+        { id: 5, label: "合議・決定", desc: "認定ランクの合議・決定", icon: <Users size={24} />, color: "bg-[#F72585]" },
+        { id: 6, label: "通知・FB", desc: "認定通知・フィードバック", icon: <Bell size={24} />, color: "bg-[#4CC9F0]" },
       ]
     },
-    { title: "認定ランク", content: "レベル７：エキスパート\nレベル６：準エキスパート\nレベル５：上級\nレベル４：準上級\nレベル３：中級\nレベル２：準中級\nレベル１：初級\n未経験：新卒社員、中途社員" },
+    { 
+      title: "④認定ランク", 
+      isRankTable: true,
+      ranks: [
+        { level: "レベル７", name: "エキスパート", target: "全社を牽引する専門家", criteria: "社外でも認められる高度な専門性と実績" },
+        { level: "レベル６", name: "準エキスパート", target: "高度な専門性を持つ中核人材", criteria: "複雑な課題を独力で解決し、後進を指導できる" },
+        { level: "レベル５", name: "上級", target: "自立した専門家", criteria: "広範な知識と経験を持ち、プロジェクトをリードできる" },
+        { level: "レベル４", name: "準上級", target: "安定した実務遂行者", criteria: "標準的な業務を高い品質で完遂できる" },
+        { level: "レベル３", name: "中級", target: "独力での業務遂行者", criteria: "基本的な業務を独力でこなせる" },
+        { level: "レベル２", name: "準中級", target: "初歩的な実務経験者", criteria: "指導の下で実務を遂行できる" },
+        { level: "レベル１", name: "初級", target: "基礎知識習得者", criteria: "用語や概念を理解している" },
+        { level: "未経験", name: "エントリー", target: "新卒・中途採用者", criteria: "研修受講中の状態" },
+      ]
+    },
   ];
 
   return (
     <div className="min-h-screen pb-24">
-      <SectionHeader title="Document" subtitle="認定制度説明資料" />
+      <SectionHeader title="Certification" subtitle="認定制度説明資料" />
       <div className="space-y-16">
         {pages.map((page, i) => (
           <div key={i} className="bg-white border border-[#141414] p-8 lg:p-12 shadow-[10px_10px_0px_0px_rgba(20,20,20,0.05)]">
@@ -799,7 +813,7 @@ function ExternalSiteView() {
                       <th className="p-4 border border-[#141414] bg-[#141414]/5 text-[10px] font-bold uppercase tracking-widest text-left w-16">No</th>
                       {page.headers?.map((header, hIdx) => (
                         <th 
-                          key={hIdx} 
+                          key={header} 
                           className={`p-4 border border-[#141414] text-[10px] font-bold uppercase tracking-widest text-left transition-colors duration-200 ${hoveredCol === hIdx ? 'bg-[#141414] text-[#F5F5F0]' : 'bg-[#141414]/5'}`}
                           onMouseEnter={() => setHoveredCol(hIdx)}
                           onMouseLeave={() => setHoveredCol(null)}
@@ -847,10 +861,10 @@ function ExternalSiteView() {
                     <div className="flex-shrink-0 w-64 group">
                       <div className="bg-[#F5F5F0] border border-[#141414] p-8 h-full transition-all hover:-translate-y-1 hover:shadow-[10px_10px_0px_0px_rgba(20,20,20,0.1)]">
                         <div className="flex justify-between items-start mb-6">
-                          <div className="w-12 h-12 bg-[#141414] text-[#F5F5F0] flex items-center justify-center rounded-full font-mono font-bold text-lg">
+                          <div className={`w-12 h-12 ${step.color} text-[#F5F5F0] flex items-center justify-center rounded-full font-mono font-bold text-lg shadow-lg`}>
                             {step.id}
                           </div>
-                          <div className="opacity-20 group-hover:opacity-100 transition-opacity">
+                          <div className="opacity-40 group-hover:opacity-100 transition-opacity">
                             {step.icon}
                           </div>
                         </div>
@@ -865,6 +879,48 @@ function ExternalSiteView() {
                     )}
                   </React.Fragment>
                 ))}
+              </div>
+            ) : page.isRankTable ? (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse bg-[#F5F5F0]">
+                  <thead>
+                    <tr className="bg-[#141414] text-[#F5F5F0]">
+                      <th className="p-5 border border-[#141414] text-xs font-bold uppercase tracking-widest text-left">ランク</th>
+                      <th className="p-5 border border-[#141414] text-xs font-bold uppercase tracking-widest text-left">名称</th>
+                      <th className="p-5 border border-[#141414] text-xs font-bold uppercase tracking-widest text-left">対象イメージ</th>
+                      <th className="p-5 border border-[#141414] text-xs font-bold uppercase tracking-widest text-left">認定基準</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {page.ranks?.map((rank, rIdx) => (
+                      <tr key={rIdx} className="hover:bg-[#141414]/5 transition-colors group">
+                        <td className="p-5 border border-[#141414] font-mono font-bold text-sm bg-[#141414]/5 text-[#141414]">{rank.level}</td>
+                        <td className="p-5 border border-[#141414] font-bold text-sm text-[#141414]">{rank.name}</td>
+                        <td className="p-5 border border-[#141414] text-sm opacity-80 text-[#141414] font-serif italic">{rank.target}</td>
+                        <td className="p-5 border border-[#141414] text-sm border-l-4 border-l-[#E63946] bg-white/50">
+                          <div className="flex items-start gap-3">
+                            <ShieldCheck size={16} className="text-[#E63946] mt-0.5 flex-shrink-0" />
+                            <span className="text-[#141414]">{rank.criteria}</span>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <div className="mt-6 flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest opacity-40">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-[#F5F5F0] border border-[#141414]"></div>
+                    <span>Base 70%</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-[#141414]"></div>
+                    <span>Main 25%</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-[#E63946]"></div>
+                    <span>Accent 5%</span>
+                  </div>
+                </div>
               </div>
             ) : (
               <div className="font-serif text-lg leading-relaxed whitespace-pre-wrap italic opacity-80 pl-4 border-l-4 border-[#141414]">
@@ -940,6 +996,151 @@ function MemberMgmtListView({ users, onSelectMember, onAddMember, onDeleteMember
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* Management Guidelines Section */}
+      <div className="mt-24 pt-12 border-t-2 border-[#141414]">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          <div className="space-y-12">
+            <section>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-red-600 text-white">
+                  <Bell size={20} />
+                </div>
+                <h3 className="text-2xl font-bold tracking-tight">注意喚起</h3>
+              </div>
+              <div className="bg-white border border-[#141414] p-8 shadow-[10px_10px_0px_0px_rgba(230,57,70,0.1)]">
+                <p className="text-sm leading-relaxed font-bold text-red-600 mb-4">
+                  情報不足による弊害を歯止める
+                </p>
+                <ul className="space-y-2 text-xs opacity-70 list-disc pl-4">
+                  <li>離職・離任の防止</li>
+                  <li>若手が発言を控えてしまう環境の改善</li>
+                  <li>人間関係の悪化防止</li>
+                </ul>
+              </div>
+            </section>
+
+            <section>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-[#141414] text-[#F5F5F0]">
+                  <Users size={20} />
+                </div>
+                <h3 className="text-2xl font-bold tracking-tight">価値観と世代</h3>
+              </div>
+              <div className="bg-white border border-[#141414] p-8 space-y-4">
+                <p className="text-sm leading-relaxed font-bold">
+                  価値観が異なる世代が集まっていることを再認識し、同じ目標に向かう
+                </p>
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="p-4 bg-[#F5F5F0] border-l-4 border-[#141414]">
+                    <p className="text-xs leading-relaxed italic font-serif">
+                      「価値観は過去の体験から作られたもの。生活習慣も実体験も異なるため、価値観が完全に統一されることはない。」
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <div className="space-y-12">
+            <section>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-[#141414] text-[#F5F5F0]">
+                  <ClipboardCheck size={20} />
+                </div>
+                <h3 className="text-2xl font-bold tracking-tight">面談・コミュニケーション</h3>
+              </div>
+              <div className="bg-white border border-[#141414] p-8 space-y-6">
+                <div className="space-y-4">
+                  <div className="flex gap-4">
+                    <div className="font-mono text-xl font-bold opacity-20">30s</div>
+                    <p className="text-sm leading-relaxed">
+                      被評価者が話し始めてから<span className="font-bold underline">30秒は話を遮らない</span>。
+                    </p>
+                  </div>
+                  <div className="flex gap-4">
+                    <div className="font-mono text-xl font-bold opacity-20">Wait</div>
+                    <p className="text-sm leading-relaxed">
+                      自分の経験値を伝えたいと思い立っても我慢する。すぐに解決情報を話さない。
+                    </p>
+                  </div>
+                  <div className="flex gap-4">
+                    <div className="font-mono text-xl font-bold opacity-20">Adv</div>
+                    <p className="text-sm leading-relaxed">
+                      原因がわかってからアドバイスすること。カウンセラーの手法を用いること。
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section>
+              <div className="flex items-center gap-3 mb-6">
+                <div className="p-2 bg-[#141414] text-[#F5F5F0]">
+                  <Info size={20} />
+                </div>
+                <h3 className="text-2xl font-bold tracking-tight">リーダーの心得</h3>
+              </div>
+              <div className="bg-[#141414] text-[#F5F5F0] p-8 space-y-4">
+                <p className="text-sm font-bold leading-relaxed">
+                  「部下の声を聞けなくなったらお払い箱」
+                </p>
+                <p className="text-xs opacity-70 leading-relaxed">
+                  進捗や成果が芳しくなくても遮らずに話をさせる。特に20代に対しては、まず<span className="text-red-400 font-bold">「認める」</span>ことが必要不可欠である。
+                </p>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        {/* Maslow's Hierarchy */}
+        <div className="mt-24 bg-[#F5F5F0] border border-[#141414] p-8 lg:p-16">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-12">
+              <h3 className="text-3xl font-bold tracking-tighter mb-4 uppercase">Maslow's Hierarchy of Needs</h3>
+              <p className="text-sm italic font-serif opacity-60">マズローの欲求5段階説</p>
+            </div>
+
+            <div className="relative flex flex-col items-center">
+              {[
+                { id: 5, label: '自己実現欲求', desc: '自分の持つ能力を最大限に発揮したい', color: 'bg-[#141414]', textColor: 'text-white', width: 'w-1/3' },
+                { id: 4, label: '承認欲求', desc: '他者から認められたい、尊敬されたい', color: 'bg-[#141414]/90', textColor: 'text-white', width: 'w-1/2' },
+                { id: 3, label: '社会的欲求', desc: '集団に属したい、仲間が欲しい', color: 'bg-[#141414]/80', textColor: 'text-white', width: 'w-2/3' },
+                { id: 2, label: '安全欲求', desc: '心身の安全、経済的安定を確保したい', color: 'bg-[#141414]/70', textColor: 'text-white', width: 'w-5/6' },
+                { id: 1, label: '生理的欲求', desc: '生きていくための本能的な欲求', color: 'bg-[#141414]/60', textColor: 'text-white', width: 'w-full' },
+              ].map((level) => (
+                <div 
+                  key={level.id}
+                  className={`${level.width} ${level.color} ${level.textColor} p-4 mb-1 text-center transition-all hover:scale-[1.02] cursor-default border border-[#141414]/10 relative group`}
+                >
+                  <div className="flex flex-col items-center">
+                    <span className="text-[8px] font-bold uppercase tracking-widest opacity-40 mb-1">Level {level.id}</span>
+                    <span className="font-bold text-sm">{level.label}</span>
+                    <div className="hidden group-hover:block absolute top-full left-1/2 -translate-x-1/2 mt-2 bg-white text-[#141414] p-2 text-[10px] z-10 border border-[#141414] shadow-xl whitespace-nowrap">
+                      {level.desc}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-4">
+                <h4 className="font-bold text-sm border-b border-[#141414] pb-2">成長欲求 (Growth Needs)</h4>
+                <p className="text-xs leading-relaxed opacity-70">
+                  自己実現欲求。人間が持つ最も高次の欲求であり、自分がなりうるものになろうとする欲求。満たされるほどさらに強い欲求が生まれる。
+                </p>
+              </div>
+              <div className="space-y-4">
+                <h4 className="font-bold text-sm border-b border-[#141414] pb-2">欠乏欲求 (Deficiency Needs)</h4>
+                <p className="text-xs leading-relaxed opacity-70">
+                  生理的欲求から承認欲求まで。足りないものを満たしたいという欲求であり、満たされないと不安や不満を感じる。
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
