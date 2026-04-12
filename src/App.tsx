@@ -700,10 +700,13 @@ function CertificationSystemView() {
   const [hoveredCol, setHoveredCol] = useState<number | null>(null);
 
   const pages = [
-    { title: "認定制度について", content: "2025/9/19 ES事業部" },
-    { title: "目次", content: "1 認定制度について\n2 目的、背景、期待する効果\n3 運用方法\n4 認定ランク" },
     { 
-      title: "②目的、背景、期待する効果", 
+      title: "認定制度について", 
+      content: "2025/9/19 ES事業部\n\n本認定制度は、従業員に対する認定制度を定めることにより\n社員教育制度の合理化、社員評価制度の明確化による合理的な運営、\nおよび営業活動への寄与を目的として定める" 
+    },
+    { title: "目次", content: "1 認定制度について\n2 目的、背景、期待する効果\n3 運用方法\n4 認定ランク\n5 スキルマトリクス要件\n6 詳細要件/研修体系\n7 研修講座一覧" },
+    { 
+      title: "目的、背景、期待する効果", 
       isTable: true,
       headers: ["目的", "課題・背景", "期待する効果"],
       rows: [
@@ -750,7 +753,7 @@ function CertificationSystemView() {
       ]
     },
     { 
-      title: "③運用方法", 
+      title: "運用方法", 
       isSteps: true,
       steps: [
         { id: 1, label: "研修履修", desc: "34分野の研修講座を履修", icon: <BookOpen size={24} />, color: "bg-[#4361EE]" },
@@ -762,7 +765,7 @@ function CertificationSystemView() {
       ]
     },
     { 
-      title: "④認定ランク", 
+      title: "認定ランク", 
       isRankTable: true,
       ranks: [
         { level: "レベル７", name: "エキスパート", target: "全社を牽引する専門家", criteria: "社外でも認められる高度な専門性と実績" },
@@ -773,6 +776,243 @@ function CertificationSystemView() {
         { level: "レベル２", name: "準中級", target: "初歩的な実務経験者", criteria: "指導の下で実務を遂行できる" },
         { level: "レベル１", name: "初級", target: "基礎知識習得者", criteria: "用語や概念を理解している" },
         { level: "未経験", name: "エントリー", target: "新卒・中途採用者", criteria: "研修受講中の状態" },
+      ]
+    },
+    {
+      title: "スキルマトリクス要件",
+      isSkillMatrix: true,
+      categories: [
+        { name: "パーソナル", span: 7 },
+        { name: "ビジネス/インダストリー", span: 4 },
+        { name: "プロジェクトマネジメント", span: 3 },
+        { name: "メソッドロジー", span: 6 },
+        { name: "テクノロジー", span: 14 }
+      ],
+      skills: [
+        "基本1", "リーダーシップ基礎", "コミュニケーション基礎", "ネゴシエーション基礎", "ITスペシャリストのリーダーシップ", "ITスペシャリストのコミュニケーション", "ITスペシャリストのネゴシエーション",
+        "IT基礎", "インダストリー業務知識の基礎", "インダストリーアプリケーション知識", "最新ビジネス動向",
+        "IT基礎", "プロジェクトマネジメント基礎", "コミュニティ活動",
+        "IT基礎", "IT基礎", "ソリューションメソッドロジー", "コンサルティングメソッドロジー", "システム管理ソリューション", "コミュニティ活動",
+        "IT基礎", "IT基礎", "システム開発基礎", "手法・技法", "システム設計", "システム構築", "システム運用/保守", "最新技術動向", "システム設計・上級", "システム構築・上級", "システム運用/保守・上級", "ソリューションメソッドロジー", "システム管理ソリューション", "コミュニティ活動"
+      ],
+      rows: [
+        { no: 1, rank: "レベル7（高度IT人材）", name: "エキスパート", values: [1,2,3,3,4,4,4,1,2,3,4,1,2,3,1,2,3,1,2,3,3,3,4,1,2,3,3,3,3,3,4,4,4,4,4,4,5] },
+        { no: 2, rank: "レベル6（高度IT人材）", name: "準エキスパート", values: [1,2,3,3,4,4,4,1,2,3,1,1,2,3,1,2,3,3,3,4,1,2,3,3,3,3,3,4,4,4,4,4,4,5] },
+        { no: 3, rank: "レベル5（高度IT人材）", name: "上級", values: [1,2,3,3,4,4,4,1,2,3,1,1,2,0,1,2,3,3,3,4,1,2,3,3,3,3,3,4,4,4,4,4,4,5] },
+        { no: 4, rank: "レベル4（高度IT人材）", name: "準上級", values: [1,2,3,3,4,4,4,1,2,3,1,1,2,0,1,2,3,3,0,0,1,2,3,3,3,3,3,4,4,4,4,4,4,5] },
+        { no: 5, rank: "レベル3（ミドル）", name: "中級", values: [1,2,3,3,4,4,4,1,2,0,0,1,2,0,1,2,3,3,0,0,1,2,3,3,3,3,3,0,0,0,0,4,4,5] },
+        { no: 6, rank: "レベル2（ミドル）", name: "準中級", values: [1,2,3,3,4,4,4,1,2,0,0,1,2,0,1,2,3,3,0,0,1,2,3,0,0,0,0,0,0,0,0,0,4,5] },
+        { no: 7, rank: "レベル1（エントリー）", name: "初級", values: [1,2,3,3,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0] },
+        { no: 8, rank: "新入社員", name: "未経験", values: [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] }
+      ]
+    },
+    {
+      title: "詳細要件/研修体系",
+      isDetailedMatrix: true,
+      sections: [
+        {
+          category: "パーソナル（人間力）",
+          skills: ["基本1", "リーダーシップ基礎", "コミュニケーション基礎", "ネゴシエーション基礎", "ITスペシャリストのリーダーシップ", "ITスペシャリストのコミュニケーション", "ITスペシャリストのネゴシエーション"],
+          rows: [
+            { rank: "レベル7（高度IT人材）", values: ["AD-V-1", "AD-V-2", "AD-V-3", "AD-V-4", "AD-V-5", "AD-V-6", "AD-V-7"] },
+            { rank: "レベル6（高度IT人材）", values: ["AD-U-1", "AD-U-2", "AD-U-3", "AD-U-4", "AD-U-5", "AD-U-6", "AD-U-7"] },
+            { rank: "レベル5（高度IT人材）", values: ["AD-T-1", "AD-T-2", "AD-T-3", "AD-T-4", "AD-T-5", "AD-T-6", "AD-T-7"] },
+            { rank: "レベル4（高度IT人材）", values: ["AD-S-1", "AD-S-2", "AD-S-3", "AD-S-4", "AD-S-5", "AD-S-6", "AD-S-7"] },
+            { rank: "レベル3（ミドル）", values: ["AD-R-1", "AD-R-2", "AD-R-3", "AD-R-4", "|", "|", "|"] },
+            { rank: "レベル2（ミドル）", values: ["AD-Q-1", "AD-Q-2", "AD-Q-3", "AD-Q-4", "|", "|", "|"] },
+            { rank: "レベル1（エントリー）", values: ["AD-P-1", "AD-P-2", "AD-P-3", "AD-P-4", "|", "|", "|"] },
+            { rank: "新入社員", values: ["AD-1", "|", "AD-3", "|", "|", "|", "|"] }
+          ]
+        },
+        {
+          category: "ビジネス/インダストリー（業務）",
+          skills: ["IT基礎", "インダストリー業務知識の基礎", "インダストリーアプリケーション知識", "最新ビジネス動向"],
+          rows: [
+            { rank: "レベル7（高度IT人材）", values: ["業V-1", "業V-2", "業V-3", "業V-4"] },
+            { rank: "レベル6（高度IT人材）", values: ["業U-1", "業U-2", "業U-3", "業U-4"] },
+            { rank: "レベル5（高度IT人材）", values: ["業T-1", "業T-2", "業T-3", "業T-4"] },
+            { rank: "レベル4（高度IT人材）", values: ["業S-1", "業S-2", "業S-3", "業S-4"] },
+            { rank: "レベル3（ミドル）", values: ["業R-1", "業R-2", "業R-3", "業R-4"] },
+            { rank: "レベル2（ミドル）", values: ["業Q-1", "業Q-2", "業Q-3", "業Q-4"] },
+            { rank: "レベル1（エントリー）", values: ["業P-1", "業P-2", "業P-3", "業P-4"] },
+            { rank: "新入社員", values: ["業-1", "業-1", "業-3", "業-1"] }
+          ]
+        },
+        {
+          category: "プロジェクトマネジメント",
+          skills: ["IT基礎", "プロジェクトマネジメント基礎", "コミュニティ活動"],
+          rows: [
+            { rank: "レベル7（高度IT人材）", values: ["AD-V-8", "AD-V-9", "AD-V-10"] },
+            { rank: "レベル6（高度IT人材）", values: ["AD-U-8", "AD-U-9", "AD-U-10"] },
+            { rank: "レベル5（高度IT人材）", values: ["AD-T-8", "AD-T-9", "AD-T-10"] },
+            { rank: "レベル4（高度IT人材）", values: ["AD-S-8", "AD-S-9", "AD-S-10"] },
+            { rank: "レベル3（ミドル）", values: ["AD-R-8", "AD-R-9", "AD-R-10"] },
+            { rank: "レベル2（ミドル）", values: ["AD-Q-8", "AD-Q-9", "AD-Q-10"] },
+            { rank: "レベル1（エントリー）", values: ["AD-P-8", "AD-P-9", "AD-P-10"] },
+            { rank: "新入社員", values: ["AD-8", "AD-9", "AD-10"] }
+          ]
+        },
+        {
+          category: "メソッドロジー",
+          skills: ["IT基礎", "IT基礎", "ソリューションメソッドロジー", "コンサルティングメソッドロジー", "システム管理ソリューション", "コミュニティ活動"],
+          rows: [
+            { rank: "レベル7（高度IT人材）", values: ["AD-V-11", "AD-V-12", "AD-V-13", "AD-V-14", "AD-V-15", "AD-V-16"] },
+            { rank: "レベル6（高度IT人材）", values: ["AD-U-11", "AD-U-12", "AD-U-13", "AD-U-14", "AD-U-15", "AD-U-16"] },
+            { rank: "レベル5（高度IT人材）", values: ["AD-T-11", "AD-T-12", "AD-T-13", "AD-T-14", "AD-T-15", "AD-T-16"] },
+            { rank: "レベル4（高度IT人材）", values: ["AD-S-11", "AD-S-12", "AD-S-13", "AD-S-14", "AD-S-15", "AD-S-16"] },
+            { rank: "レベル3（ミドル）", values: ["AD-R-11", "AD-R-12", "AD-R-13", "AD-R-14", "AD-R-15", "AD-R-16"] },
+            { rank: "レベル2（ミドル）", values: ["AD-Q-11", "AD-Q-12", "AD-Q-13", "AD-Q-14", "AD-Q-15", "AD-Q-16"] },
+            { rank: "レベル1（エントリー）", values: ["AD-P-11", "AD-P-12", "AD-P-13", "AD-P-14", "AD-P-15", "AD-P-16"] },
+            { rank: "新入社員", values: ["AD-11", "AD-12", "AD-13", "AD-14", "AD-15", "AD-16"] }
+          ]
+        },
+        {
+          category: "テクノロジー",
+          skills: ["IT基礎(NW)", "IT基礎(サーバ)", "システム開発基礎", "手法・技法", "システム設計", "システム構築", "システム運用/保守", "最新技術動向", "システム設計・上級", "システム構築・上級", "システム運用/保守・上級", "ソリューションメソッドロジー", "システム管理ソリューション", "コミュニティ活動"],
+          rows: [
+            { rank: "レベル7（高度IT人材）", values: ["SC-V-1", "SC-V-2", "SC-V-3", "SC-V-4", "SC-V-5", "SC-V-6", "SC-V-7", "SC-V-8", "SC-V-9", "SC-V-10", "SC-V-11", "SC-V-12", "SC-V-13", "AD-V-16"] },
+            { rank: "レベル6（高度IT人材）", values: ["SC-U-1", "SC-U-2", "SC-U-3", "SC-U-4", "SC-U-5", "SC-U-6", "SC-U-7", "SC-U-8", "SC-U-9", "SC-U-10", "SC-U-11", "SC-U-12", "SC-U-13", "AD-U-16"] },
+            { rank: "レベル5（高度IT人材）", values: ["SC-T-1", "SC-T-2", "SC-T-3", "SC-T-4", "SC-T-5", "SC-T-6", "SC-T-7", "SC-T-8", "SC-T-9", "SC-T-10", "SC-T-11", "SC-T-12", "SC-T-13", "AD-T-16"] },
+            { rank: "レベル4（高度IT人材）", values: ["SC-S-1", "SC-S-2", "SC-S-3", "SC-S-4", "SC-S-5", "SC-S-6", "SC-S-7", "SC-S-8", "SC-S-9", "SC-S-10", "SC-S-11", "SC-S-12", "SC-S-13", "AD-S-16"] },
+            { rank: "レベル3（ミドル）", values: ["SC-R-1", "SC-R-2", "SC-R-3", "SC-R-4", "SC-R-5", "SC-R-6", "SC-R-7", "SC-R-8", "SC-R-9", "SC-R-10", "SC-R-11", "SC-R-12", "SC-R-13", "AD-R-16"] },
+            { rank: "レベル2（ミドル）", values: ["SC-Q-1", "SC-Q-2", "SC-Q-3", "SC-Q-4", "SC-Q-5", "SC-Q-6", "SC-Q-7", "SC-Q-8", "SC-Q-9", "SC-Q-10", "SC-Q-11", "SC-Q-12", "SC-Q-13", "AD-Q-16"] },
+            { rank: "レベル1（エントリー）", values: ["SC-P-1", "SC-P-2", "SC-P-3", "SC-P-4", "SC-P-5", "SC-P-6", "SC-P-7", "SC-P-8", "SC-P-9", "SC-P-10", "SC-P-11", "SC-P-12", "SC-P-13", "AD-P-16"] },
+            { rank: "新入社員", values: ["SC-1", "SC-2", "SC-3", "SC-4", "SC-5", "SC-6", "SC-7", "SC-8", "SC-9", "SC-10", "SC-11", "SC-12", "SC-13", "AD-16"] }
+          ]
+        }
+      ]
+    },
+    {
+      title: "研修講座一覧",
+      isTrainingList: true,
+      sections: [
+        {
+          category: "パーソナル（人間力）",
+          rows: [
+            { type: "AD", name: "自己理解と他者理解のためのエニアグラム基礎", target: "AD-V-1^AD-U-1^AD-T-1^AD-S-1^AD-R-1^AD-Q-1^AD-P-1" },
+            { type: "AD", name: "自己理解と他者理解のためのコミュニケーションの全の全", target: "AD-V-1^AD-U-1^AD-T-1^AD-S-1^AD-R-1^AD-Q-1^AD-P-1" },
+            { type: "AD", name: "自己理解と他者理解のためのコミュニケーションの全の全", target: "AD-V-1^AD-U-1^AD-T-1^AD-S-1^AD-R-1^AD-Q-1^AD-P-1" },
+            { type: "AD", name: "自己理解と他者理解のためのビジネス・トーキング", target: "AD-V-1^AD-U-1^AD-T-1^AD-S-1^AD-R-1^AD-Q-1^AD-P-1" },
+            { type: "AD", name: "自己理解と他者理解のためのアイデアを出すための発想法", target: "AD-V-1^AD-U-1^AD-T-1^AD-S-1^AD-R-1^AD-Q-1^AD-P-1" },
+            { type: "AD", name: "自己理解と他者理解のためのクリエイティブ・シンキング", target: "AD-V-1^AD-U-1^AD-T-1^AD-S-1^AD-R-1^AD-Q-1^AD-P-1" },
+            { type: "AD", name: "【研修動画】新入社員スタートアップコース研修の振り返り（2年目に向けての心構え）【対話型ライブオンライン研修】", target: "AD-1" },
+            { type: "AD", name: "【研修動画】新入社員スタートアップコース研修の振り返り（2年目に向けての心構え）", target: "AD-1" },
+            { type: "AD", name: "ストーリーで学ぶ ビジネスリーダー（マインド編）", target: "AD-V-2^AD-U-2^AD-T-2^AD-S-2^AD-R-2^AD-Q-2^AD-P-2^AD-2" },
+            { type: "AD", name: "ストーリーで学ぶ ビジネスリーダー（ビジョン設定・戦略の構築編）", target: "AD-V-2^AD-U-2^AD-T-2^AD-S-2^AD-R-2^AD-Q-2^AD-P-2^AD-2" },
+            { type: "AD", name: "ストーリーで学ぶ ビジネスリーダー（マネジメント(PDCA)／仕事の進め方編）", target: "AD-V-2^AD-U-2^AD-T-2^AD-S-2^AD-R-2^AD-Q-2^AD-P-2^AD-2" },
+            { type: "AD", name: "ストーリーで学ぶ ビジネスリーダー（ビジョン・戦略の構築実践／チームビルディング編）", target: "AD-V-2^AD-U-2^AD-T-2^AD-S-2^AD-R-2^AD-Q-2^AD-P-2^AD-2" },
+            { type: "AD", name: "ストーリーで学ぶ ビジネスリーダー（リーダーとしてのセルフマネジメント編）", target: "AD-V-2^AD-U-2^AD-T-2^AD-S-2^AD-R-2^AD-Q-2^AD-P-2^AD-2" },
+            { type: "AD", name: "周囲への影響力を高めるセルフリーダーシップ", target: "AD-V-2^AD-U-2^AD-T-2^AD-S-2^AD-R-2^AD-Q-2^AD-P-2^AD-2" },
+            { type: "AD", name: "【研修動画】自己理解とリーダーシップ（自己の特性と強みを理解し、組織の中での振る舞いや発揮スキルについて）", target: "AD-V-2^AD-U-2^AD-T-2^AD-S-2^AD-R-2^AD-Q-2^AD-P-2^AD-2" },
+            { type: "AD", name: "自己理解と他者理解のためのコミュニケーションの全の全", target: "AD-V-3^AD-U-3^AD-T-3^AD-S-3^AD-R-3^AD-Q-3^AD-P-3^AD-3" },
+            { type: "AD", name: "新入社員マインド", target: "AD-V-3^AD-U-3^AD-T-3^AD-S-3^AD-R-3^AD-Q-3^AD-P-3^AD-3" },
+            { type: "AD", name: "マネジメントの要諦シリーズ（他者とのコミュニケーションの勘所）", target: "AD-V-3^AD-U-3^AD-T-3^AD-S-3^AD-R-3^AD-Q-3^AD-P-3^AD-3" },
+            { type: "AD", name: "コミュニケーション心理学", target: "AD-V-3^AD-U-3^AD-T-3^AD-S-3^AD-R-3^AD-Q-3^AD-P-3^AD-3" },
+            { type: "AD", name: "【公開セミナー】 マネジメントの要諦シリーズ（他者とのコミュニケーションの勘所）", target: "AD-V-3^AD-U-3^AD-T-3^AD-S-3^AD-R-3^AD-Q-3^AD-P-3^AD-3" },
+            { type: "AD", name: "自己理解と他者理解のためのコミュニケーションの全の全", target: "AD-V-3^AD-U-3^AD-T-3^AD-S-3^AD-R-3^AD-Q-3^AD-P-3^AD-3" },
+            { type: "AD", name: "論理的思考力", target: "AD-V-4^AD-U-4^AD-T-4^AD-S-4^AD-R-4^AD-Q-4^AD-P-4^AD-4" },
+            { type: "AD", name: "自己理解と他者理解のためのエニアグラム基礎", target: "AD-V-5^AD-U-5^AD-T-5^AD-S-5^AD-R-5^AD-Q-5^AD-P-5^AD-5" },
+            { type: "AD", name: "自己理解と他者理解のためのコミュニケーションの全の全", target: "AD-V-5^AD-U-5^AD-T-5^AD-S-5^AD-R-5^AD-Q-5^AD-P-5^AD-5" },
+            { type: "AD", name: "マネジメントの要諦シリーズ（他者とのコミュニケーションの勘所）", target: "AD-V-5^AD-U-5^AD-T-5^AD-S-5^AD-R-5^AD-Q-5^AD-P-5^AD-5" },
+            { type: "AD", name: "マネジメントの要諦シリーズ（他者の育成）", target: "AD-V-5^AD-U-5^AD-T-5^AD-S-5^AD-R-5^AD-Q-5^AD-P-5^AD-5" },
+            { type: "AD", name: "【TOP MANAGEMENTシリーズ】自己変革と上級管理職・経営層シリーズ（レクチャー編：マインドセット - 変化のメカニズム(1/2) -）", target: "AD-V-16^AD-U-16^AD-T-16^AD-S-16^AD-R-16^AD-Q-16^AD-P-16^AD-16" },
+            { type: "AD", name: "【TOP MANAGEMENTシリーズ】自己変革と上級管理職・経営層シリーズ（レクチャー編：マインドセット - 変化のメカニズム(2/2) -）", target: "AD-V-16^AD-U-16^AD-T-16^AD-S-16^AD-R-16^AD-Q-16^AD-P-16^AD-16" },
+            { type: "AD", name: "【TOP MANAGEMENTシリーズ】自己変革と上級管理職・経営層シリーズ（レクチャー編：ビジョン・パーパス・バリュー編）", target: "AD-V-16^AD-U-16^AD-T-16^AD-S-16^AD-R-16^AD-Q-16^AD-P-16^AD-16" },
+            { type: "AD", name: "【TOP MANAGEMENTシリーズ】自己変革と上級管理職・経営層シリーズ（レクチャー編：戦略編）", target: "AD-V-16^AD-U-16^AD-T-16^AD-S-16^AD-R-16^AD-Q-16^AD-P-16^AD-16" },
+            { type: "AD", name: "【TOP MANAGEMENTシリーズ】自己変革と上級管理職・経営層シリーズ（レクチャー編：組織文化 - 変化への要件 -）", target: "AD-V-16^AD-U-16^AD-T-16^AD-S-16^AD-R-16^AD-Q-16^AD-P-16^AD-16" },
+            { type: "AD", name: "【TOP MANAGEMENTシリーズ】自己変革と上級管理職・経営層シリーズ（レクチャー編：組織文化 - 変化と抵抗 -）", target: "AD-V-16^AD-U-16^AD-T-16^AD-S-16^AD-R-16^AD-Q-16^AD-P-16^AD-16" },
+            { type: "AD", name: "【TOP MANAGEMENTシリーズ】自己変革と上級管理職・経営層シリーズ（レクチャー編：組織文化 - 心理的安全性の醸成 -）", target: "AD-V-16^AD-U-16^AD-T-16^AD-S-16^AD-R-16^AD-Q-16^AD-P-16^AD-16" },
+            { type: "AD", name: "【TOP MANAGEMENTシリーズ】自己変革と上級管理職・経営層シリーズ（レクチャー編：経営管理 - 何を管理すべきか -）", target: "AD-V-16^AD-U-16^AD-T-16^AD-S-16^AD-R-16^AD-Q-16^AD-P-16^AD-16" },
+            { type: "AD", name: "【TOP MANAGEMENTシリーズ】自己変革と上級管理職・経営層シリーズ（レクチャー編：経営管理 - 決定されたことがどこまで伝わるか -）", target: "AD-V-16^AD-U-16^AD-T-16^AD-S-16^AD-R-16^AD-Q-16^AD-P-16^AD-16" },
+            { type: "AD", name: "【TOP MANAGEMENTシリーズ】自己変革と上級管理職・経営層シリーズ（レクチャー編：人と組織構築 - 個人依存からの脱却 -）", target: "AD-V-16^AD-U-16^AD-T-16^AD-S-16^AD-R-16^AD-Q-16^AD-P-16^AD-16" },
+            { type: "AD", name: "検討中", target: "AD-V-4^AD-U-4^AD-T-4^AD-S-4^AD-R-4^AD-Q-4^AD-P-4^AD-4" }
+          ]
+        },
+        {
+          category: "プロジェクトマネジメント",
+          rows: [
+            { type: "AD", name: "無理なく無駄なく仕事を進めるためのタスク管理", target: "AD-V-8^AD-U-8^AD-T-8^AD-S-8^AD-R-8^AD-Q-8^AD-P-8^AD-8" },
+            { type: "AD", name: "プロジェクトマネジメントの全の全", target: "AD-V-8^AD-U-8^AD-T-8^AD-S-8^AD-R-8^AD-Q-8^AD-P-8^AD-8" },
+            { type: "AD", name: "【IT・技術系】はじめてのプロジェクト管理シリーズ（全体編）", target: "AD-V-8^AD-U-8^AD-T-8^AD-S-8^AD-R-8^AD-Q-8^AD-P-8^AD-8" },
+            { type: "AD", name: "【IT・技術系】はじめてのプロジェクト管理シリーズ（WBS作成編）", target: "AD-V-8^AD-U-8^AD-T-8^AD-S-8^AD-R-8^AD-Q-8^AD-P-8^AD-8" },
+            { type: "AD", name: "【IT・技術系】はじめてのプロジェクト管理シリーズ（進捗管理編）", target: "AD-V-8^AD-U-8^AD-T-8^AD-S-8^AD-R-8^AD-Q-8^AD-P-8^AD-8" },
+            { type: "AD", name: "【IT・技術系】はじめてのプロジェクト管理シリーズ（進捗管理編）", target: "AD-V-8^AD-U-8^AD-T-8^AD-S-8^AD-R-8^AD-Q-8^AD-P-8^AD-8" },
+            { type: "AD", name: "【IT・技術系】はじめてのプロジェクト管理シリーズ（リスク管理編）", target: "AD-V-8^AD-U-8^AD-T-8^AD-S-8^AD-R-8^AD-Q-8^AD-P-8^AD-8" },
+            { type: "AD", name: "ハイパフォーマーになるためのセルフマネジメント術", target: "AD-V-8^AD-U-8^AD-T-8^AD-S-8^AD-R-8^AD-Q-8^AD-P-8^AD-8" },
+            { type: "AD", name: "検討中", target: "AD-V-8" }
+          ]
+        },
+        {
+          category: "インダストリー（業務）",
+          rows: [
+            { type: "SC", name: "ITエンジニアのための共通業務知識の基礎", target: "業V-2^業U-2^業T-2^業S-2^業R-2^業Q-2^業P-2^業-2" }
+          ]
+        },
+        {
+          category: "プロジェクトマネジメント（技術）",
+          rows: [
+            { type: "SC", name: "ITベンダーとのプロジェクトアプローチと進行管理 全4回", target: "SC-V-4^SC-U-4^SC-T-4^SC-S-4^SC-R-4^SC-Q-4^SC-P-4^SC-4" },
+            { type: "SC", name: "上流工程で活躍したい人のための企画・アプローチ", target: "SC-V-4^SC-U-4^SC-T-4^SC-S-4^SC-R-4^SC-Q-4^SC-P-4^SC-4" },
+            { type: "SC", name: "外部設計・内部設計の実践 -Schooで設計してみよう- 全3回", target: "SC-V-4^SC-U-4^SC-T-4^SC-S-4^SC-R-4^SC-Q-4^SC-P-4^SC-4" },
+            { type: "SC", name: "現代システム概論 全3回", target: "SC-V-4^SC-U-4^SC-T-4^SC-S-4^SC-R-4^SC-Q-4^SC-P-4^SC-4" },
+            { type: "SC", name: "システムエンジニアのための分析力とロジカルシンキング 全3回", target: "SC-V-4^SC-U-4^SC-T-4^SC-S-4^SC-R-4^SC-Q-4^SC-P-4^SC-4" },
+            { type: "SC", name: "受託開発のための法律 全2回", target: "SC-V-4^SC-U-4^SC-T-4^SC-S-4^SC-R-4^SC-Q-4^SC-P-4^SC-4" }
+          ]
+        },
+        {
+          category: "メソッドロジー（技術）",
+          rows: [
+            { type: "SC", name: "DevOps -エンジニアが学ぶべきこととその意味- 全1回", target: "AD-V-11^AD-U-11^AD-T-11^AD-S-11^AD-R-11^AD-Q-11^AD-P-11^AD-11" },
+            { type: "SC", name: "はじめてのGit 全3回", target: "AD-V-11^AD-U-11^AD-T-11^AD-S-11^AD-R-11^AD-Q-11^AD-P-11^AD-11" },
+            { type: "SC", name: "GitHubを使ってデプロイしてみようの実践 全2回", target: "AD-V-11^AD-U-11^AD-T-11^AD-S-11^AD-R-11^AD-Q-11^AD-P-11^AD-11" },
+            { type: "SC", name: "スタートアップのCEOが教えてくれた、ITインフラのセキュリティ対策", target: "AD-V-11^AD-U-11^AD-T-11^AD-S-11^AD-R-11^AD-Q-11^AD-P-11^AD-11" }
+          ]
+        },
+        {
+          category: "テクノロジー",
+          rows: [
+            { type: "SC", name: "ネットワーク基礎 Cisco Networking Academy -CCNA ITN- 全6回", target: "SC-V-1^SC-U-1^SC-T-1^SC-S-1^SC-R-1^SC-Q-1^SC-P-1^SC-1" },
+            { type: "SC", name: "ネットワーク 基礎 全4回", target: "SC-V-1^SC-U-1^SC-T-1^SC-S-1^SC-R-1^SC-Q-1^SC-P-1^SC-1" },
+            { type: "SC", name: "ネットワーク 構成 全6回", target: "SC-V-1^SC-U-1^SC-T-1^SC-S-1^SC-R-1^SC-Q-1^SC-P-1^SC-1" },
+            { type: "SC", name: "AWS入門（2025年版） 全8回", target: "SC-V-2^SC-U-2^SC-T-2^SC-S-2^SC-R-2^SC-Q-2^SC-P-2^SC-2" },
+            { type: "SC", name: "AWS Lambdaを活用したサーバーレス実践 全5回", target: "SC-V-2^SC-U-2^SC-T-2^SC-S-2^SC-R-2^SC-Q-2^SC-P-2^SC-2" },
+            { type: "SC", name: "【2017年版】AWS実践 -よくある構成を実際に構築- 全4回", target: "SC-V-2^SC-U-2^SC-T-2^SC-S-2^SC-R-2^SC-Q-2^SC-P-2^SC-2" },
+            { type: "SC", name: "AWSクラウドデザインパターン 全5回", target: "SC-V-2^SC-U-2^SC-T-2^SC-S-2^SC-R-2^SC-Q-2^SC-P-2^SC-2" },
+            { type: "SC", name: "【Microsoft Azure 集中講義】Azureクラウドデザインパターン -Webシステムの構築を通して習得するCDP- 全7回", target: "SC-V-2^SC-U-2^SC-T-2^SC-S-2^SC-R-2^SC-Q-2^SC-P-2^SC-2" },
+            { type: "SC", name: "Microsoft Azure IaaS講座: 5分で構築するサーバーシステム（2回目） 〜怖くない構築！マシンを動かしてみよう〜 全1回", target: "SC-V-2^SC-U-2^SC-T-2^SC-S-2^SC-R-2^SC-Q-2^SC-P-2^SC-2" },
+            { type: "SC", name: "Microsoft Azure IaaS講座: 5分で構築するサーバーシステム（1回目） 〜とにかく仮想マシンを動かしてみよう〜 全1回", target: "SC-V-2^SC-U-2^SC-T-2^SC-S-2^SC-R-2^SC-Q-2^SC-P-2^SC-2" },
+            { type: "SC", name: "今さら聞けない DevOps 全3回", target: "SC-V-4^SC-U-4^SC-T-4^SC-S-4^SC-R-4^SC-Q-4^SC-P-4^SC-4" },
+            { type: "SC", name: "システム開発のための外部設計・内部設計入門 全3回", target: "SC-V-4^SC-U-4^SC-T-4^SC-S-4^SC-R-4^SC-Q-4^SC-P-4^SC-4" },
+            { type: "SC", name: "外部設計・内部設計の実践 -Schooで設計してみよう- 全3回", target: "SC-V-4^SC-U-4^SC-T-4^SC-S-4^SC-R-4^SC-Q-4^SC-P-4^SC-4" },
+            { type: "SC", name: "サクッとわかる外部設計入門 全3回", target: "SC-V-4^SC-U-4^SC-T-4^SC-S-4^SC-R-4^SC-Q-4^SC-P-4^SC-4" },
+            { type: "SC", name: "サクッとわかる内部設計入門", target: "SC-V-4^SC-U-4^SC-T-4^SC-S-4^SC-R-4^SC-Q-4^SC-P-4^SC-4" },
+            { type: "SC", name: "サクっとわかる外部設計入門", target: "SC-V-4^SC-U-4^SC-T-4^SC-S-4^SC-R-4^SC-Q-4^SC-P-4^SC-4" },
+            { type: "SC", name: "付加価値を高める自己分析の方法 全1回", target: "SC-V-4^SC-U-4^SC-T-4^SC-S-4^SC-R-4^SC-Q-4^SC-P-4^SC-4" }
+          ]
+        },
+        {
+          category: "定義",
+          rows: [
+            { type: "テクノロジー", name: "業務を遂行するに当たり必要となる技術的スキル。最新技術動向、開発技術、プログラミング技術を習得", target: "" },
+            { type: "メソッドロジー", name: "業務を遂行するに当たり必要となる手法・方法論、開発技法等のスキル", target: "" },
+            { type: "プロジェクトマネジメント", name: "プロジェクトを遂行するに当たり必要となるスキル。ITスキル標準としてプロジェクトマネジメント協会が推奨するPMBOK（Project Management Body of Knowledge）の知識の体系を推奨する", target: "" },
+            { type: "ビジネス/インダストリー", name: "社会の仕組み、企業の成り立ちにおいて知っておくべき知識。業界に特化した業務知識、法令、規則など", target: "" },
+            { type: "パーソナル", name: "業務を遂行する際に必要となる人間的能力のスキル", target: "" }
+          ]
+        }
+      ],
+      rationale: [
+        "各評価項目を設けた根拠については次のとおり",
+        "ITネゴシエーションの目的",
+        "　システムやソフトウェアの要件、仕様、価格などについて、複数のステークホルダー間で合意を形成する必要があり",
+        "　そのために顧客との長期的な関係を構築し、より良い共創関係を築くことが求められることから項目として設定した",
+        "　（事前準備→信頼構築→要求事項分析→WinWinの解決策を創出→交渉の実行→双方納得のうえで合意形成）",
+        "インダストリの目的",
+        "　「産業」を意味する「Industry」を表し、特定の産業分野に特化して開発されたソフトウェアやシステムに現場で従事し",
+        "　業務を遂行することから、特定の技術的な課題解決を目的とした素養も必要と考えられる",
+        "　製品開発における設計・シミュレーション、製造プロセスの最適化、品質管理の向上を",
+        "　特定の産業の業務効率化と生産性向上を図るため必要となるため評価項目として設定した。",
+        "　この素養を養い、着任現場の企業の競争力強化やイノベーション促進に貢献することを狙う。"
       ]
     },
   ];
@@ -894,6 +1134,176 @@ function CertificationSystemView() {
                   </tbody>
                 </table>
                 <div className="mt-6 flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest opacity-40">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-[#F5F5F0] border border-[#141414]"></div>
+                    <span>Base 70%</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-[#141414]"></div>
+                    <span>Main 25%</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-[#E63946]"></div>
+                    <span>Accent 5%</span>
+                  </div>
+                </div>
+              </div>
+            ) : page.isSkillMatrix ? (
+              <div className="overflow-x-auto border border-[#141414]">
+                <table className="w-full border-collapse bg-[#F5F5F0] text-[10px]">
+                  <thead>
+                    <tr className="bg-[#141414] text-[#F5F5F0]">
+                      <th rowSpan={3} className="p-2 border border-[#F5F5F0]/20 w-8">No</th>
+                      <th rowSpan={3} className="p-2 border border-[#F5F5F0]/20 w-32">ランク</th>
+                      <th rowSpan={3} className="p-2 border border-[#F5F5F0]/20 w-24">名称</th>
+                      {page.categories?.map((cat, cIdx) => (
+                        <th key={cIdx} colSpan={cat.span} className="p-2 border border-[#F5F5F0]/20 text-center">
+                          {cat.name}
+                        </th>
+                      ))}
+                    </tr>
+                    <tr className="bg-[#141414]/90 text-[#F5F5F0]">
+                      {page.skills?.map((skill, sIdx) => (
+                        <th key={sIdx} className="p-2 border border-[#F5F5F0]/20 min-w-[40px] h-40 relative">
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <span className="[writing-mode:vertical-rl] text-[9px] whitespace-nowrap">
+                              {skill}
+                            </span>
+                          </div>
+                        </th>
+                      ))}
+                    </tr>
+                    <tr className="bg-[#141414]/80 text-[#F5F5F0]">
+                      {page.skills?.map((_, sIdx) => (
+                        <th key={sIdx} className="p-1 border border-[#F5F5F0]/20 text-center font-mono">
+                          {sIdx + 1}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {page.rows?.map((row, rIdx) => (
+                      <tr key={rIdx} className="hover:bg-[#141414]/5 transition-colors">
+                        <td className="p-2 border border-[#141414]/20 text-center font-mono">{row.no}</td>
+                        <td className="p-2 border border-[#141414]/20 font-bold">{row.rank}</td>
+                        <td className="p-2 border border-[#141414]/20">{row.name}</td>
+                        {row.values?.map((val, vIdx) => (
+                          <td 
+                            key={vIdx} 
+                            className={`p-2 border border-[#141414]/20 text-center font-mono font-bold ${val > 0 ? 'bg-[#E63946]/10 text-[#E63946]' : 'opacity-20'}`}
+                          >
+                            {val > 0 ? val : '-'}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <div className="p-4 flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest opacity-40 bg-white/50 border-t border-[#141414]">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-[#F5F5F0] border border-[#141414]"></div>
+                    <span>Base 70%</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-[#141414]"></div>
+                    <span>Main 25%</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-[#E63946]"></div>
+                    <span>Accent 5%</span>
+                  </div>
+                </div>
+              </div>
+            ) : page.isDetailedMatrix ? (
+              <div className="space-y-12">
+                {page.sections?.map((section, sIdx) => (
+                  <div key={sIdx} className="overflow-x-auto border border-[#141414]">
+                    <div className="bg-[#141414] text-[#F5F5F0] p-3 text-xs font-bold uppercase tracking-widest">
+                      {section.category}
+                    </div>
+                    <table className="w-full border-collapse bg-[#F5F5F0] text-[10px]">
+                      <thead>
+                        <tr className="bg-[#141414]/10 text-[#141414]">
+                          <th className="p-2 border border-[#141414]/20 w-32 text-left">ランク</th>
+                          {section.skills?.map((skill, skIdx) => (
+                            <th key={skIdx} className="p-2 border border-[#141414]/20 min-w-[40px] h-40 relative">
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <span className="[writing-mode:vertical-rl] text-[9px] whitespace-nowrap">
+                                  {skill}
+                                </span>
+                              </div>
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {section.rows?.map((row, rIdx) => (
+                          <tr key={rIdx} className="hover:bg-[#141414]/5 transition-colors">
+                            <td className="p-2 border border-[#141414]/20 font-bold bg-[#141414]/5">{row.rank}</td>
+                            {row.values?.map((val, vIdx) => (
+                              <td 
+                                key={vIdx} 
+                                className={`p-2 border border-[#141414]/20 text-center font-mono ${val === '|' ? 'opacity-20' : 'font-bold text-[#E63946]'}`}
+                              >
+                                {val}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ))}
+                <div className="p-4 flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest opacity-40 bg-white/50 border-t border-[#141414]">
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-[#F5F5F0] border border-[#141414]"></div>
+                    <span>Base 70%</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-[#141414]"></div>
+                    <span>Main 25%</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 bg-[#E63946]"></div>
+                    <span>Accent 5%</span>
+                  </div>
+                </div>
+              </div>
+            ) : page.isTrainingList ? (
+              <div className="space-y-12">
+                {page.sections?.map((section, sIdx) => (
+                  <div key={sIdx} className="overflow-x-auto border border-[#141414]">
+                    <div className="bg-[#141414] text-[#F5F5F0] p-3 text-[11px] font-bold uppercase tracking-widest">
+                      {section.category}
+                    </div>
+                    <table className="w-full border-collapse bg-[#F5F5F0] text-[10px]">
+                      <thead>
+                        <tr className="bg-[#141414]/10 text-[#141414]">
+                          <th className="p-3 border border-[#141414]/20 w-20 text-left text-[11px] font-bold">レベル</th>
+                          <th className="p-3 border border-[#141414]/20 text-left text-[11px] font-bold">講座名</th>
+                          <th className="p-3 border border-[#141414]/20 w-1/3 text-left text-[11px] font-bold">対象ランク</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {section.rows?.map((row, rIdx) => (
+                          <tr key={rIdx} className="hover:bg-[#141414]/5 transition-colors">
+                            <td className="p-3 border border-[#141414]/20 font-mono bg-[#141414]/5 text-[11px]">{row.type}</td>
+                            <td className="p-3 border border-[#141414]/20 font-bold text-[11px]">{row.name}</td>
+                            <td className="p-3 border border-[#141414]/20 font-mono opacity-60 text-[11px]">{row.target}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ))}
+                {page.rationale && (
+                  <div className="mt-12 p-8 bg-[#141414]/5 border-l-4 border-[#141414] font-serif italic text-sm leading-relaxed space-y-2">
+                    {page.rationale.map((line, lIdx) => (
+                      <p key={lIdx}>{line}</p>
+                    ))}
+                  </div>
+                )}
+                <div className="p-4 flex items-center gap-4 text-[10px] font-bold uppercase tracking-widest opacity-40 bg-white/50 border-t border-[#141414]">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 bg-[#F5F5F0] border border-[#141414]"></div>
                     <span>Base 70%</span>
