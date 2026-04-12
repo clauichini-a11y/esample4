@@ -591,20 +591,6 @@ function LoginScreen({ onLogin, error, loading }: { onLogin: (id?: string, passw
           </button>
         </form>
 
-        <div className="relative mb-8">
-          <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-[#141414]/10"></div></div>
-          <div className="relative flex justify-center text-[10px] uppercase tracking-widest"><span className="bg-white px-2 opacity-40">または</span></div>
-        </div>
-        
-        <button 
-          onClick={() => onLogin()}
-          disabled={loading}
-          className="w-full flex items-center justify-center gap-3 py-4 border border-[#141414] text-[#141414] font-bold uppercase tracking-widest hover:bg-[#141414]/5 transition-all group disabled:opacity-50"
-        >
-          <LogIn size={20} className="group-hover:translate-x-1 transition-transform" />
-          Googleでログイン
-        </button>
-        
         <p className="mt-8 text-[10px] font-mono opacity-40 uppercase tracking-widest leading-relaxed">
           社内アカウントを使用して<br />システムにアクセスしてください
         </p>
