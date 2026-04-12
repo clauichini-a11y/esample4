@@ -932,6 +932,13 @@ function CertificationSystemView() {
     {
       title: "詳細要件/研修体系",
       isDetailedMatrix: true,
+      description: [
+        "ADから始まる英数字記載の講座　→　オールディファレンスで受講（https://learning-navigator.learningagency.co.jp/）",
+        "",
+        "SCから始まる英数字記載の講座　→　Schooで受講（https://schoo.jp/biz/user）",
+        "",
+        "業務で始まる数字記載の講座　→　現場で受講"
+      ],
       sections: [
         {
           category: "パーソナル（人間力）",
@@ -1339,6 +1346,13 @@ function CertificationSystemView() {
               </div>
             ) : page.isDetailedMatrix ? (
               <div className="space-y-12">
+                {page.description && (
+                  <div className="mb-8 p-6 bg-white border border-[#141414] font-bold text-sm space-y-2">
+                    {page.description.map((line, idx) => (
+                      <p key={idx} className={line === "" ? "h-2" : ""}>{line}</p>
+                    ))}
+                  </div>
+                )}
                 {page.sections?.map((section, sIdx) => (
                   <div key={sIdx} className="overflow-x-auto border border-[#141414]">
                     <div className="bg-[#141414] text-[#F5F5F0] p-3 text-xs font-bold uppercase tracking-widest">
