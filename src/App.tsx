@@ -491,12 +491,22 @@ export default function App() {
 
           <div className="flex-shrink-0 p-8 border-t border-[#141414] bg-[#F5F5F0]">
             <div className="flex items-center gap-3 mb-4">
-              <img src={user.photoURL || ""} alt="" className="w-8 h-8 rounded-full border border-[#141414]/10" />
+              <img src={user.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.displayName || 'User')}&background=random`} alt="" className="w-8 h-8 rounded-full border border-[#141414]/10" referrerPolicy="no-referrer" />
               <div className="overflow-hidden">
                 <p className="text-xs font-bold truncate">{user.displayName}</p>
-                <p className="text-[10px] opacity-50 truncate">{user.email}</p>
+                <p className="text-[10px] opacity-50 truncate">{user.email || 'No email'}</p>
               </div>
             </div>
+
+            {/* Google Login Link for switching or upgrading from fallback */}
+            <button 
+              onClick={() => handleLogin()}
+              className="w-full mb-4 flex items-center justify-center gap-2 px-4 py-2 border border-[#141414] text-[10px] font-bold uppercase tracking-wider hover:bg-[#141414] hover:text-[#F5F5F0] transition-all"
+            >
+              <LogIn size={14} />
+              <span>Googleでログイン</span>
+            </button>
+
             <p className="text-[10px] font-mono opacity-50">© 2026 SKILLGRID v1.0</p>
           </div>
         </aside>
