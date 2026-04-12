@@ -32,6 +32,7 @@ export interface User {
   id: string; // 社員番号
   name: string; // 氏名
   department: string; // 部署名
+  uid?: string; // Firebase Auth UID
   workExperiences?: WorkExperience[];
   profile?: MemberProfile;
 }

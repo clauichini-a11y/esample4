@@ -27,7 +27,8 @@ import {
   FileText,
   Send,
   ClipboardCheck,
-  Bell
+  Bell,
+  AlertCircle
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -64,6 +65,43 @@ import { User as FirebaseUser } from 'firebase/auth';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
+enum OperationType {
+  CREATE = 'create',
+  UPDATE = 'update',
+  DELETE = 'delete',
+  LIST = 'list',
+  GET = 'get',
+  WRITE = 'write',
+}
+
+interface FirestoreErrorInfo {
+  error: string;
+  operationType: OperationType;
+  path: string | null;
+  authInfo: {
+    userId: string | undefined;
+    email: string | null | undefined;
+    emailVerified: boolean | undefined;
+    isAnonymous: boolean | undefined;
+  }
+}
+
+function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errInfo: FirestoreErrorInfo = {
+    error: error instanceof Error ? error.message : String(error),
+    authInfo: {
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+    },
+    operationType,
+    path
+  };
+  console.error('Firestore Error: ', JSON.stringify(errInfo));
+  return new Error(JSON.stringify(errInfo));
+}
+
 type View = 'portal' | 'certification-system' | 'member-mgmt-list' | 'member-mgmt-detail' | 'dashboard' | 'member-list' | 'member-detail' | 'skill-list' | 'add-member' | 'add-skill';
 
 export default function App() {
@@ -74,6 +112,7 @@ export default function App() {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [notification, setNotification] = useState<{ message: string, type: 'error' | 'success' } | null>(null);
   
   // Data State
   const [users, setUsers] = useState<UserType[]>([]);
@@ -123,11 +162,18 @@ export default function App() {
       const skillsData = snapshot.docs.map(doc => doc.data() as SkillMaster);
       if (snapshot.empty) {
         mockSkillMaster.forEach(async (s) => {
-          await setDoc(doc(db, 'skills', s.id), s);
+          try {
+            await setDoc(doc(db, 'skills', s.id), s);
+          } catch (e) {
+            handleFirestoreError(e, OperationType.WRITE, `skills/${s.id}`);
+          }
         });
       } else {
         setSkills(skillsData);
       }
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'skills');
+      setNotification({ message: 'スキルの読み込みに失敗しました。', type: 'error' });
     });
 
     // Listen to Users
@@ -137,11 +183,18 @@ export default function App() {
       // Initial seed if empty
       if (snapshot.empty) {
         mockUsers.forEach(async (u) => {
-          await setDoc(doc(db, 'users', u.id), u);
+          try {
+            await setDoc(doc(db, 'users', u.id), u);
+          } catch (e) {
+            handleFirestoreError(e, OperationType.WRITE, `users/${u.id}`);
+          }
         });
       } else {
         setUsers(usersData);
       }
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'users');
+      setNotification({ message: 'メンバ情報の読み込みに失敗しました。', type: 'error' });
     });
 
     // Listen to UserSkills
@@ -151,11 +204,18 @@ export default function App() {
       // Initial seed if empty
       if (snapshot.empty) {
         mockUserSkills.forEach(async (us) => {
-          await addDoc(collection(db, 'userSkills'), us);
+          try {
+            await addDoc(collection(db, 'userSkills'), us);
+          } catch (e) {
+            handleFirestoreError(e, OperationType.WRITE, 'userSkills');
+          }
         });
       } else {
         setUserSkills(skillsData);
       }
+    }, (error) => {
+      handleFirestoreError(error, OperationType.LIST, 'userSkills');
+      setNotification({ message: 'スキル習得状況の読み込みに失敗しました。', type: 'error' });
     });
 
     return () => {
@@ -194,6 +254,7 @@ export default function App() {
               isAnonymous: true,
               email: null,
               photoURL: null,
+              isFallback: true
             } as any);
           }
         } else {
@@ -311,6 +372,24 @@ export default function App() {
       </header>
 
       <div className="flex">
+        {/* Notification Toast */}
+        <AnimatePresence>
+          {notification && (
+            <motion.div 
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className={`fixed top-4 right-4 z-[100] p-4 border border-[#141414] shadow-xl flex items-center gap-3 ${notification.type === 'error' ? 'bg-red-50 text-red-600' : 'bg-green-50 text-green-600'}`}
+            >
+              {notification.type === 'error' ? <X size={20} /> : <ClipboardCheck size={20} />}
+              <span className="text-sm font-bold">{notification.message}</span>
+              <button onClick={() => setNotification(null)} className="ml-4 opacity-40 hover:opacity-100">
+                <X size={16} />
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Sidebar / Navigation */}
         <aside className={`
           fixed inset-y-0 left-0 z-40 w-64 bg-[#F5F5F0] border-r border-[#141414] transform transition-transform duration-300 ease-in-out flex flex-col
@@ -321,6 +400,15 @@ export default function App() {
             <div className="w-10 h-10 bg-[#141414] flex items-center justify-center text-[#F5F5F0] font-bold text-2xl">S</div>
             <span className="font-bold tracking-tighter text-2xl">SkillGrid</span>
           </div>
+
+          {(user as any)?.isFallback && (
+            <div className="px-6 py-3 bg-amber-50 border-b border-amber-200 flex items-center gap-2">
+              <AlertCircle size={14} className="text-amber-600 shrink-0" />
+              <p className="text-[10px] text-amber-700 leading-tight">
+                オフラインモード: データの保存に制限がある場合があります。
+              </p>
+            </div>
+          )}
 
           <nav className="flex-1 overflow-y-auto p-4 space-y-1 custom-scrollbar">
             <NavItem 
@@ -439,8 +527,10 @@ export default function App() {
                     if (window.confirm('このメンバを削除してもよろしいですか？')) {
                       try {
                         await deleteDoc(doc(db, 'users', id));
+                        setNotification({ message: 'メンバを削除しました。', type: 'success' });
                       } catch (error) {
-                        console.error("Error deleting member:", error);
+                        handleFirestoreError(error, OperationType.DELETE, `users/${id}`);
+                        setNotification({ message: 'メンバの削除に失敗しました。権限を確認してください。', type: 'error' });
                       }
                     }
                   }}
@@ -451,7 +541,13 @@ export default function App() {
                   user={users.find(u => u.id === selectedUserId)!} 
                   onBack={() => navigateTo('member-mgmt-list')}
                   onUpdateUser={async (updatedUser) => {
-                    await setDoc(doc(db, 'users', updatedUser.id), updatedUser);
+                    try {
+                      await setDoc(doc(db, 'users', updatedUser.id), updatedUser);
+                      setNotification({ message: 'メンバ情報を更新しました。', type: 'success' });
+                    } catch (error) {
+                      handleFirestoreError(error, OperationType.UPDATE, `users/${updatedUser.id}`);
+                      setNotification({ message: 'メンバ情報の更新に失敗しました。', type: 'error' });
+                    }
                   }}
                 />
               )}
@@ -478,7 +574,13 @@ export default function App() {
                   onBack={() => navigateTo('member-list')}
                   onExport={() => exportToPDF('main-content', `skillgrid-member-${selectedUserId}`)}
                   onUpdateUser={async (updatedUser) => {
-                    await setDoc(doc(db, 'users', updatedUser.id), updatedUser);
+                    try {
+                      await setDoc(doc(db, 'users', updatedUser.id), updatedUser);
+                      setNotification({ message: 'プロフィールを更新しました。', type: 'success' });
+                    } catch (error) {
+                      handleFirestoreError(error, OperationType.UPDATE, `users/${updatedUser.id}`);
+                      setNotification({ message: 'プロフィールの更新に失敗しました。', type: 'error' });
+                    }
                   }}
                 />
               )}
@@ -498,10 +600,17 @@ export default function App() {
                 <AddMemberView 
                   onAdd={async (newUser) => {
                     try {
-                      await setDoc(doc(db, 'users', newUser.id), { ...newUser, workExperiences: [] });
+                      const userDoc = { 
+                        ...newUser, 
+                        uid: user?.uid || 'unknown',
+                        workExperiences: [] 
+                      };
+                      await setDoc(doc(db, 'users', newUser.id), userDoc);
+                      setNotification({ message: 'メンバを追加しました。', type: 'success' });
                       navigateTo('member-list');
                     } catch (error) {
-                      console.error("Error adding member:", error);
+                      handleFirestoreError(error, OperationType.WRITE, `users/${newUser.id}`);
+                      setNotification({ message: 'メンバの追加に失敗しました。権限を確認してください。', type: 'error' });
                     }
                   }} 
                 />
@@ -513,16 +622,20 @@ export default function App() {
                   onAdd={async (us) => {
                     try {
                       await addDoc(collection(db, 'userSkills'), us);
+                      setNotification({ message: 'スキルを登録しました。', type: 'success' });
                       navigateTo('skill-list');
                     } catch (error) {
-                      console.error("Error adding skill:", error);
+                      handleFirestoreError(error, OperationType.WRITE, 'userSkills');
+                      setNotification({ message: 'スキルの登録に失敗しました。', type: 'error' });
                     }
                   }} 
                   onAddMaster={async (newMaster) => {
                     try {
                       await setDoc(doc(db, 'skills', newMaster.id), newMaster);
+                      setNotification({ message: 'スキルマスターに追加しました。', type: 'success' });
                     } catch (error) {
-                      console.error("Error adding skill master:", error);
+                      handleFirestoreError(error, OperationType.WRITE, `skills/${newMaster.id}`);
+                      setNotification({ message: 'スキルマスターの追加に失敗しました。', type: 'error' });
                     }
                   }}
                 />
